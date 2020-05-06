@@ -2,99 +2,102 @@
 
 import numpy as np
 import argparse
-import cv2 
-import imutils 
+import cv2
+import imutils
 
-
-cap = cv2.VideoCapture('PNNLParkingLot2.avi')
-
-# med_frames = []
-# count = 0
-# desired_time_limit = 5
-# frame_rate = 25
-# desired_thresh = 0.75
-
-#med_frames will contain previous 10 frames of the current frames
-med_frames = []
-count = 0
-cap = cv2.VideoCapture('PNNL_Parking_LOT(1).avi')
-ret  , image = cap.read()
-
-#unavailable stream
-if ~ret:
-    print("Stream Unavailable")
-
-#taking first frame as intial background frame  
-if ret:
-    background_frame = image
-    background_frame = cv2.cvtColor(background_frame , cv2.COLOR_BGR2GRAY)
-    background_frame = cv2.GaussianBlur(background_frame , (21 , 21) , 0)
-
-while(cap.isOpened()):
-    ret, frame = cap.read()
+#Detects Motion from video by dynamically changing background
+def detectMotion(cap , med_frames , desired_time_limit , desired_thresh , frame_rate):
     
-#    grayscaling the image
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#    Reading first frame
+    print("Reading first frame...")
+    ret, image = cap.read()
+    
+#    If no frames available then return
+    print("First frame Read")
+    if  not ret:
+        print("[INFO] Stream unavailable..!")
+        cap.release()
+        return 
+    
+#    Taking first first frame as background 
+    if ret:
+        background_frame = image
 
-#   Gaussian Blur to conada activate reduce noise.
-    gray = cv2.GaussianBlur(gray , (21 , 21) , 0)
-    
-    cgray = gray.copy()
-    gray = gray.astype(dtype = np.float32)
-    
-    background_frame = background_frame.astype(dtype = np.float32)
-    
-#   taking difference between frame and background frame
-    dframe = cv2.absdiff(gray , background_frame)
-    dframe = dframe.astype(dtype=np.uint8)
-    
-    thresh = cv2.threshold(dframe, 10, 255,cv2.THRESH_BINARY)[1]
-    
-#    dilation and erosion
-    kernel = np.ones((5,5), np.uint8)
-    thresh = cv2.dilate(thresh, kernel, iterations=2)
-    thresh = cv2.erode(thresh, kernel, iterations=1)
-    
-#    finding contours
-    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-    cnts = imutils.grab_contours(cnts)
-    
-# loop over the contours
-    for c in cnts:
-# if the contour is too small, ignore it
-        if cv2.contourArea(c) < 500:
-            continue
+#   Loop through video
+    while(cap.isOpened()):
 
-        (x, y, w, h) = cv2.boundingRect(c)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    
-#finding median background frame using previous 10 frames
-    if count<=10:
-        med_frames.append(cgray)
-        count+=1
-    else:
-        background_frame = np.median(med_frames , axis = 0)
-        med_frames.pop(0)
-        med_frames.append(cgray)
-
-
-#     if len(med_frames) <= (desired_time_limit * frame_rate):
-#         med_frames.append(cgray)
-#     else:
-#         med_frames.pop(0)
-#         med_frames.append(cgray)
-#         s = ssim(med_frames[0] , med_frames[-1])
-#         if s >= desired_thresh:
-#             background_frame = np.median(med_frames , axis = 0)
-#             cv2.imshow('BackGround_frame' , cv2.resize(background_frame , (640 , 480)))
+        ret, frame = cap.read()
         
-#    displaying the result
-    cv2.imshow('frame',cv2.resize(frame , (640 , 480)))
-    
+        frame = cv2.resize(frame, (640, 480))
+        cframe = frame.copy()
+        background_frame = cv2.resize(background_frame, (640, 480))
+        
+#    Applying appropiate filters
+        dframe = cv2.absdiff(frame, background_frame)
+        
+        gray = cv2.cvtColor(dframe, cv2.COLOR_BGR2GRAY)
+        
+        blur = cv2.GaussianBlur(gray, (21, 21), 0)
+        
+        thresh_delta = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)[1]
+        
+        dilated = cv2.dilate(thresh_delta, None, iterations=2)
+        cnts = cv2.findContours(dilated,cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = imutils.grab_contours(cnts)
+        
+#        Finding contours
+        for cnt in cnts:
+#            Contour below a certain value are ignored
+            if cv2.contourArea(cnt) < 300:
+                continue
+#            Drawing rectangular box around contours
+            (x, y, w, h) = cv2.boundingRect(cnt)
+            cv2.rectangle(frame, (x-1, y-1), (x+w, y+h), (255, 255, 255), 1)
+            cv2.imshow("Motion" , frame)
+                       
+#        Changing background dynamically
+#        Appends the first (desired_time_limit * frame_rate) frames
+        if len(med_frames) <= (desired_time_limit * frame_rate):
+            med_frames.append(cframe)
+        else:
+#           \Appends 1 new frame and 1 removes old frame 
+            med_frames.pop(0)
+            med_frames.append(cframe)
+            
+#            Difference between first and last frame of med_frame(list)
+            background_diff = cv2.absdiff(med_frames[0] , med_frames[(desired_time_limit * frame_rate) - 1 ])
+            
+#            Grayscaling
+            background_diff = cv2.cvtColor(background_diff , cv2.COLOR_BGR2GRAY)
+            
+#            Summation of all the element of background_diff
+            m = np.sum(background_diff)
+#            cv2.imshow("BackGround Difference" , background_diff)
+#            cv2.waitKey(0)
+            
+#            Changing background_frame 
+            if m < desired_thresh:
+                background_frame = cframe
+#                cv2.imshow('BackGround_frame' , cv2.resize(background_frame , (640 , 480)))
+#                cv2.waitKey(0)
+                
 #    break loop if enter is pressed
-    if cv2.waitKey(1) == 13:
-        break
+        if cv2.waitKey(1) == 13:
+            break
+#
+#
+    cap.release()
+    cv2.destroyAllWindows()
+    
 
 
-cap.release()
+med_frames = []
+desired_time_limit = 5
+frame_rate = 25
+desired_thresh = 700000
+cap = cv2.VideoCapture('resort.mp4')
+if cap.isOpened():
+	# Function call to detect Motion
+        detectMotion(cap , med_frames , desired_time_limit , desired_thresh , frame_rate)    
+
 cv2.destroyAllWindows()
