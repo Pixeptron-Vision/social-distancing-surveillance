@@ -8,6 +8,12 @@ import imutils
 
 cap = cv2.VideoCapture('PNNLParkingLot2.avi')
 
+# med_frames = []
+# count = 0
+# desired_time_limit = 5
+# frame_rate = 25
+# desired_thresh = 0.75
+
 #med_frames will contain previous 10 frames of the current frames
 med_frames = []
 count = 0
@@ -70,6 +76,17 @@ while(cap.isOpened()):
         background_frame = np.median(med_frames , axis = 0)
         med_frames.pop(0)
         med_frames.append(cgray)
+
+
+#     if len(med_frames) <= (desired_time_limit * frame_rate):
+#         med_frames.append(cgray)
+#     else:
+#         med_frames.pop(0)
+#         med_frames.append(cgray)
+#         s = ssim(med_frames[0] , med_frames[-1])
+#         if s >= desired_thresh:
+#             background_frame = np.median(med_frames , axis = 0)
+#             cv2.imshow('BackGround_frame' , cv2.resize(background_frame , (640 , 480)))
         
 #    displaying the result
     cv2.imshow('frame',cv2.resize(frame , (640 , 480)))
