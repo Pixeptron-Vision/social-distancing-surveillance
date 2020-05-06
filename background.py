@@ -1,17 +1,22 @@
 import cv2
 import numpy as np
+import datetime as dt
 
 
-video = cv2.VideoCapture('cctv(2).mp4')
+video = cv2.VideoCapture('cctv.mp4')
 
-# For background frame, intialising a background_frames dictionary
-motion_status = False
-motion_completed = False
-background_frames = {}
-desired_time_frame = 10
+# Initialising the the threshold time for latest common static background frame
+#timeDuration = dt.timedelta(seconds=20)
+#desired_time_frame = int(timeDuration.seconds)
+desired_time_frame = 20
 frame_rate = 25
 
+# For background frame, intialising a background_frames dictionary
+background_frames = {}
+
+
 # first frame
+motion_status = False
 if video.isOpened:
     ret, frame1 = video.read()
     fid = 1
@@ -33,41 +38,41 @@ while video.isOpened():
     frame = cv2.absdiff(frame1, frame2)
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
-    blur = cv2.GaussianBlur(gray, (21, 21), 0)
-    threst_delta = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)[1]
-    dilated = cv2.dilate(threst_delta, None, iterations=2)
+    blur = cv2.GaussianBlur(gray, (17, 17), 0)
+    threst_delta = cv2.threshold(blur, 10, 255, cv2.THRESH_BINARY)[1]
+    dilated = cv2.dilate(threst_delta, None, iterations=3)
     contours, _ = cv2.findContours(dilated,
                                    cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Contours represent any motion occured between consequetive frames
     for cnt in contours:
         # filtering out which contours to ignore
-        if cv2.contourArea(cnt) < 300:
+        if cv2.contourArea(cnt) < 500:
             continue
         motion_status = True
-        motion_completed = True
-        # Drawing a rectangular box arounf the bounding points of contour
+        # Drawing a rectangular box around the bounding points of contour
         (x, y, w, h) = cv2.boundingRect(cnt)
         cv2.rectangle(frame1, (x-1, y-1), (x+w-1-1, y+h-1-1), (255, 0, 0), 3)
-        cv2.putText(frame1, "Status: {}".format("Humans Moving"),
+        cv2.putText(frame1, "Status: {}".format("Motion Detected"),
                     (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     #cv2.drawContours(frame1, countours, -1, (255, 0, 0), 3)
 
-    # Updating background frame
-    if not motion_status and motion_completed:
-        if(len(background_frames) > frame_rate * desired_time_frame):
-            # Taking the mean of background frames using their frame id
+    # Updating background frame only during motion
+    if motion_status:
+        # if no of frames in background_frames > threshold no of frames to update
+        if len(background_frames) > frame_rate * desired_time_frame:
+            # Taking the mean of background frames using the frame id
             background_id = []
             for i in sorted(background_frames.keys()):
                 background_id.append(i)
             np_background_id = np.array(background_id)
             # mean frame id of background
             mean_id = int(np.mean(np_background_id))
-            np_background_id = np_background_id[np_background_id > mean_id]
-            # median background frame itself
-            meean_background_frame = background_frames[np_background_id[0]]
+            np_background_id = np_background_id[np_background_id >= mean_id]
+            # mean background frame itself
+            mean_background_frame = background_frames[np_background_id[0]]
+            # making the dictionary empty
             background_frames.clear()
-        motion_completed = False
 
     # No motion detected in frame1, so add to dictionary of background frame
     if not motion_status:
