@@ -1,13 +1,15 @@
 import cv2
 import numpy as np
 
-video = cv2.VideoCapture(0)
+
+video = cv2.VideoCapture('cctv(2).mp4')
 
 # For background frame, intialising a background_frames dictionary
 motion_status = False
 motion_completed = False
 background_frames = {}
-
+desired_time_frame = 10
+frame_rate = 25
 
 # first frame
 if video.isOpened:
@@ -15,7 +17,7 @@ if video.isOpened:
     fid = 1
     # Selecting first frame as background
     frame1 = cv2.resize(frame1, (640, 480))
-    median_background_frame = frame1
+    mean_background_frame = frame1
 
 while video.isOpened():
     # second and subsequent frames
@@ -32,7 +34,7 @@ while video.isOpened():
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     #gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
     blur = cv2.GaussianBlur(gray, (21, 21), 0)
-    threst_delta = cv2.threshold(blur, 10, 255, cv2.THRESH_BINARY)[1]
+    threst_delta = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)[1]
     dilated = cv2.dilate(threst_delta, None, iterations=2)
     contours, _ = cv2.findContours(dilated,
                                    cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -40,7 +42,7 @@ while video.isOpened():
     # Contours represent any motion occured between consequetive frames
     for cnt in contours:
         # filtering out which contours to ignore
-        if cv2.contourArea(cnt) < 500:
+        if cv2.contourArea(cnt) < 300:
             continue
         motion_status = True
         motion_completed = True
@@ -51,29 +53,31 @@ while video.isOpened():
                     (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
     #cv2.drawContours(frame1, countours, -1, (255, 0, 0), 3)
 
-    # No motion detected in frame1, so add to dictionary of background frame
-
+    # Updating background frame
     if not motion_status and motion_completed:
-        # Taking the median of background frames using their frame id
-        background_id = []
-        for i in sorted(background_frames.keys()):
-            background_id.append(i)
-        np_background_id = np.array(background_id)
-        # median frame id of background
-        background_median_id = int(np.median(np_background_id))
-        # median background frame itself
-        median_background_frame = background_frames[background_median_id]
-        background_frames.clear()
+        if(len(background_frames) > frame_rate * desired_time_frame):
+            # Taking the mean of background frames using their frame id
+            background_id = []
+            for i in sorted(background_frames.keys()):
+                background_id.append(i)
+            np_background_id = np.array(background_id)
+            # mean frame id of background
+            mean_id = int(np.mean(np_background_id))
+            np_background_id = np_background_id[np_background_id > mean_id]
+            # median background frame itself
+            meean_background_frame = background_frames[np_background_id[0]]
+            background_frames.clear()
         motion_completed = False
 
+    # No motion detected in frame1, so add to dictionary of background frame
     if not motion_status:
-        background_frames[fid] = (frame1)
+        background_frames[fid] = frame1
 
     # Displaying the frames
     cv2.imshow("Frame", frame1)
     cv2.imshow("Motion", threst_delta)
     # Displaying median background frame
-    cv2.imshow("Background", median_background_frame)
+    cv2.imshow("Background", mean_background_frame)
 
     # Choosing next frame
     frame1 = frame2
@@ -84,7 +88,6 @@ while video.isOpened():
     key = cv2.waitKey(1)
     if(key == 13):
         break
-
 
 video.release()
 cv2.destroyAllWindows()
