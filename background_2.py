@@ -1,4 +1,9 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed May  6 15:59:50 2020
 
+@author: Lakhan
+"""
 
 import numpy as np
 import argparse
@@ -97,7 +102,7 @@ frame_rate = 25
 desired_thresh = 700000
 cap = cv2.VideoCapture('resort.mp4')
 if cap.isOpened():
-	# Function call to detect Motion
+	# Function call to detect motion
         detectMotion(cap , med_frames , desired_time_limit , desired_thresh , frame_rate)    
 
 cv2.destroyAllWindows()
