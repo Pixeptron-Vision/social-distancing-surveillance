@@ -3,13 +3,13 @@ import numpy as np
 import datetime as dt
 
 
-video = cv2.VideoCapture('cctv.mp4')
+video = cv2.VideoCapture('rtsp://service:Tata!123@192.168.51.5/1')
 
 # Initialising the the threshold time for latest common static background frame
 #timeDuration = dt.timedelta(seconds=20)
 #desired_time_frame = int(timeDuration.seconds)
-desired_time_frame = 20
-frame_rate = 25
+desired_time_frame = 1
+frame_rate = 15
 
 # For background frame, intialising a background_frames dictionary
 background_frames = {}

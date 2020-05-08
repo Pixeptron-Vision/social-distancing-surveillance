@@ -100,7 +100,7 @@ med_frames = []
 desired_time_limit = 5
 frame_rate = 25
 desired_thresh = 700000
-cap = cv2.VideoCapture('resort.mp4')
+cap = cv2.VideoCapture('rtsp://service:Tata!123@192.168.51.5/1')
 if cap.isOpened():
 	# Function call to detect motion
         detectMotion(cap , med_frames , desired_time_limit , desired_thresh , frame_rate)    
