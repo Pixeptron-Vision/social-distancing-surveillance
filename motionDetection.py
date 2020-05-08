@@ -133,7 +133,7 @@ while True:
     
     #Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-    cap = VideoCaptureAsync(src=0)            
+    cap = VideoCaptureAsync('rtsp://service:Tata!123@192.168.51.5/1')            
     cap.start()             # This is responsible for starting up the thread and frame capturing process
     if cap.isOpened():
         print('Camera is connected')
