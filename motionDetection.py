@@ -1,6 +1,7 @@
 import numpy as np
 import argparse
 import cv2
+import datetime as dt
 import imutils
 import sys
 from scipy.spatial import distance
@@ -11,7 +12,9 @@ from visionObjects.backgroundDetection import backgroundCalc
 from visionObjects.streamError import display_stream_error
 
 # The below function is responsible for implementing the Detecting the motion.
-desired_time_frame = 1
+timeDuration = dt.timedelta(seconds=40)
+desired_time_frame = int(timeDuration.seconds)
+#desired_time_frame = 10
 frame_rate = 15
 threshold_dist = 75
 # For background frame, intialising a background_frames dictionary
@@ -93,7 +96,6 @@ def detectMotion(cap):
     return True
 
 
-
 while True:
     # cap = cv2.VideoCapture('http://service:Tata!123@192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=60779') #service:TATA!@123;service:Pass!234; 48.51           ;rtsp:/service:TATA!@123@192.168.48.51
     # rtsp://192.168.48.51//rtsp_tunnel , rtsp:/service:TATA!@123@192.168.48.51
@@ -101,7 +103,7 @@ while True:
     # ret, image = cap.read() #http://192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=60779
     # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-    cap = VideoCaptureAsync(src='../PNNLParkingLot2.avi')
+    cap = VideoCaptureAsync(src='cctv(2).mp4')
     # cap = VideoCaptureAsync(src=0)
     # This is responsible for starting up the thread and frame capturing process
     cap.start()
