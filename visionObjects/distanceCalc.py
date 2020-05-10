@@ -47,8 +47,7 @@ class d_Calc:
 
             person_1_id = pairs[0]
             person_2_id = pairs[1]
-            print(len(pairs))
-        # print(len(X))
+            # print(len(pairs))
             for i in range(len(person_1_id)):
                 cv2.circle(frame1, (center[person_1_id[i]][0],
                                     center[person_1_id[i]][1]), 10, (0, 0, 255), -1)

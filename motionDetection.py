@@ -8,7 +8,7 @@ from scipy.spatial import distance
 from visionObjects.videocaptureasync import VideoCaptureAsync
 from visionObjects.distanceCalc import d_Calc
 from visionObjects.backgroundDetection import backgroundCalc
-
+from visionObjects.streamError import display_stream_error
 
 # The below function is responsible for implementing the Detecting the motion.
 desired_time_frame = 1
@@ -22,7 +22,6 @@ mean_background_frame = None
 
 def detectMotion(cap):
 
-    print("Reading first frame...")
     ret, frame1 = cap.read()
     fid = 1
     frame1 = cv2.resize(frame1, (640, 480))
@@ -36,7 +35,7 @@ def detectMotion(cap):
         return False
 
     while cap.isOpened():
-        # second and subsequent frames
+        # Read second and subsequent frames
         ret, frame2 = cap.read()
         if not ret or frame2 is None:
             print("[INFO] Cam IP Stream unavailable...")
@@ -50,7 +49,7 @@ def detectMotion(cap):
             # Applying appropiate filters
             frame = cv2.absdiff(frame1, frame2)
             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            #gray = cv2.fastNlMeansDenoising(gray, None, 10, 7, 21)
+
             blur = cv2.GaussianBlur(gray, (17, 17), 0)
             threst_delta = cv2.threshold(blur, 10, 255, cv2.THRESH_BINARY)[1]
             dilated = cv2.dilate(threst_delta, None, iterations=3)
@@ -68,14 +67,14 @@ def detectMotion(cap):
                     background_frames, mean_background_frame, frame_rate, desired_time_frame)
                 mean_background_frame = b_obj.updateBackground(
                     background_frames, mean_background_frame, frame_rate, desired_time_frame)
-    # No motion detected in frame1, so add to dictionary of background frame
+            # No motion detected in frame1, so add to dictionary of background frame
             if not motion_status:
                 background_frames[fid] = frame1
 
-    # Displaying the frames
+            # Displaying the frames
             cv2.imshow("Frame", frame1)
             cv2.imshow("Motion", threst_delta)
-    # Displaying median background frame
+            # Displaying median background frame
             cv2.imshow("Background", mean_background_frame)
             # Choosing next frame
             frame1 = frame2
@@ -87,25 +86,12 @@ def detectMotion(cap):
             cv2.destroyAllWindows()
             sys.exit(0)
             break
-    # cv2.waitKey(0)
-    # cap.release()
-    # out.release()
+
     cap.stop()
     cv2.destroyAllWindows()
-    return True  # Returns True to display succesfull end of function and prevents returning garbage value
+    # Returns True to display succesfull end of function and prevents returning garbage value
+    return True
 
-
-# Function for error display if stream is unavailable at start or camera port is inaccessible.
-def display_stream_error():
-    # cv2.destroyWindow('Camera Stream')
-    cv2.destroyWindow('Motion')      # Destroys the rdundant gui window
-    error_img = cv2.imread(r'stream_error.jpg')
-    error_img = cv2.resize(error_img, (500, 500), interpolation=cv2.INTER_AREA)
-    print('Camera disconnected')
-    # cap.release()
-    cv2.imshow('Stream', error_img)
-    # A 3 second refresh/halt to recheck connections
-    cv2.waitKey(1000)
 
 
 while True:
@@ -115,8 +101,8 @@ while True:
     # ret, image = cap.read() #http://192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=60779
     # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-    # cap = VideoCaptureAsync(src='PNNLParkingLot2.avi')
-    cap = VideoCaptureAsync(src="cctv(2).mp4")
+    cap = VideoCaptureAsync(src='../PNNLParkingLot2.avi')
+    # cap = VideoCaptureAsync(src=0)
     # This is responsible for starting up the thread and frame capturing process
     cap.start()
     if cap.isOpened():
@@ -128,8 +114,5 @@ while True:
     # If system is unable to open/access the camera port.
     else:
         display_stream_error()
-        continue
 
-# cap = cv2.VideoCapture(0)
 cv2.destroyAllWindows()
-# detectMotion(cap)
