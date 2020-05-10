@@ -7,6 +7,9 @@ from scipy.spatial import distance
 # VideoCaptureAsync implements separate thread for reading stream from camera
 from visionObjects.videocaptureasync import VideoCaptureAsync
 from visionObjects.distanceCalc import d_Calc
+from visionObjects.backgroundDetection import backgroundCalc
+
+
 # The below function is responsible for implementing the Detecting the motion.
 desired_time_frame = 1
 frame_rate = 15
@@ -15,24 +18,6 @@ threshold_dist = 75
 background_frames = {}
 motion_status = False
 mean_background_frame = None
-
-
-def updateBackground(background_frames, frame_rate, desired_time_frame):
-    # if no of frames in background_frames > threshold no of frames to update
-    global mean_background_frame
-    if len(background_frames) > frame_rate * desired_time_frame:
-        # Taking the mean of background frames using the frame id
-        background_id = []
-        for i in sorted(background_frames.keys()):
-            background_id.append(i)
-        np_background_id = np.array(background_id)
-        # mean frame id of background
-        mean_id = int(np.mean(np_background_id))
-        np_background_id = np_background_id[np_background_id >= mean_id]
-        # mean background frame itself
-        mean_background_frame = background_frames[np_background_id[0]]
-        # making the dictionary empty
-        background_frames.clear()
 
 
 def detectMotion(cap):
@@ -77,10 +62,12 @@ def detectMotion(cap):
             motion_status = d_obj.CalcDist(
                 frame1, threshold_dist, motion_status, contours)
 
-#            Changing background dynamically
+#           Changing background dynamically
             if motion_status:
-                updateBackground(
-                    background_frames, frame_rate, desired_time_frame)
+                b_obj = backgroundCalc(
+                    background_frames, mean_background_frame, frame_rate, desired_time_frame)
+                mean_background_frame = b_obj.updateBackground(
+                    background_frames, mean_background_frame, frame_rate, desired_time_frame)
     # No motion detected in frame1, so add to dictionary of background frame
             if not motion_status:
                 background_frames[fid] = frame1
