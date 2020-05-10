@@ -5,13 +5,22 @@ import imutils
 import sys
 from scipy.spatial import distance
 from visionObjects.videocaptureasync import VideoCaptureAsync  #VideoCaptureAsync implements separate thread for reading stream from camera
-
+from visionObjects.distanceCalc import d_Calc
 # The below function is responsible for implementing the Detecting the motion.
+desired_time_frame = 1
+frame_rate = 15
+threshold_dist = 75
+# For background frame, intialising a background_frames dictionary
+background_frames = {}
+motion_status = False
+
 def detectMotion(cap):
 
     print("Reading first frame...")
     ret, frame1 = cap.read()
     fid=1
+    frame1 = cv2.resize(frame1, (640, 480))
+    mean_background_frame = frame1
     print("First frame Read")
     if  not ret or frame1 is None:
         print("[INFO] Stream unavailable..!")
@@ -26,6 +35,7 @@ def detectMotion(cap):
             cap.stop()
             return False
         else :
+            motion_status = False
             # Resizing the frame
             frame1 = cv2.resize(frame1, (640, 480))
             frame2 = cv2.resize(frame2, (640, 480))
@@ -39,52 +49,36 @@ def detectMotion(cap):
             contours, _ = cv2.findContours(dilated,
                                            cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             print(f"Number of contours found in {fid} frame = { len(contours) }")
+           
+            d_obj = d_Calc(frame1 , threshold_dist , motion_status , contours)
+            motion_status = d_obj.CalcDist(frame1 , threshold_dist , motion_status , contours)
+            
+#            Changing background dynamically
+            if motion_status:
+        # if no of frames in background_frames > threshold no of frames to update
+                if len(background_frames) > frame_rate * desired_time_frame:
+            # Taking the mean of background frames using the frame id
+                    background_id = []
+                    for i in sorted(background_frames.keys()):
+                        background_id.append(i)
+                    np_background_id = np.array(background_id)
+            # mean frame id of background
+                    mean_id = int(np.mean(np_background_id))
+                    np_background_id = np_background_id[np_background_id >= mean_id]
+            # mean background frame itself
+                    mean_background_frame = background_frames[np_background_id[0]]
+            # making the dictionary empty
+                    background_frames.clear()
 
-            # Contours represent any motion occured between consequetive frames
-            center = []  # Will contain centres of all contours
-            print(" Finding center of contours")
-            for cnt in contours:
-                # filtering out which contours to ignore
-                if cv2.contourArea(cnt) < 700:
-                    continue
-                # Drawing a rectangular box around the bounding points of contour
-                (x, y, w, h) = cv2.boundingRect(cnt)
-                cv2.rectangle(frame1, (x-1, y-1), (x+w-1-1, y+h-1-1), (255, 0, 0), 3)
+    # No motion detected in frame1, so add to dictionary of background frame
+            if not motion_status:
+                background_frames[fid] = frame1
 
-                M = cv2.moments(cnt)
-                cx = int(M['m10'] / M['m00'])
-                cy = int(M['m01'] / M['m00'])
-                center.append([cx, cy])
-               # cv2.putText(frame1, "Status: {}".format("Motion Detected"),
-                #            (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            #cv2.drawContours(frame1, countours, -1, (255, 0, 0), 3)
-            # cv2.imshow('Stream',frame1)
-            N = len(center)
-            if N>1:
-
-                # Find distance between all pairs
-                D = distance.pdist(center)
-                D = distance.squareform(D)
-                # D
-                threshold_dist = 75
-
-                # ignore the upper triangle as the matrix will be symmetric so yo avoid repetation of pairs
-                upper_tri = np.triu_indices(N, 0)
-                D[upper_tri] = threshold_dist+100
-                pairs = np.where(D < threshold_dist)
-
-                person_1_id = pairs[0]
-                person_2_id = pairs[1]
-                print(len(pairs))
-                # print(len(X))
-                for i in range(len(person_1_id)):
-                    cv2.circle(frame1, (center[person_1_id[i]][0],
-                                        center[person_1_id[i]][1]), 10, (0, 0, 255), -1)
-                    cv2.circle(frame1, (center[person_2_id[i]][0],
-                                        center[person_2_id[i]][1]), 10, (0, 0, 255), -1)
-                    # Displaying the frames
-            cv2.imshow("Stream", frame1)
+    # Displaying the frames
+            cv2.imshow("Frame", frame1)
             cv2.imshow("Motion", threst_delta)
+    # Displaying median background frame
+            cv2.imshow("Background", mean_background_frame)
             # Choosing next frame
             frame1 = frame2
             fid += 1
@@ -130,7 +124,7 @@ while True:
     #Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
     # cap = VideoCaptureAsync(src='PNNLParkingLot2.avi')
-    cap = VideoCaptureAsync(src=0)
+    cap = VideoCaptureAsync(src="PNNL_Parking_LOT(1).avi")
     cap.start()             # This is responsible for starting up the thread and frame capturing process
     if cap.isOpened():
         print('Camera is connected')
