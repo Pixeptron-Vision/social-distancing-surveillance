@@ -4,7 +4,7 @@ import cv2
 import imutils
 import sys
 from scipy.spatial import distance
-from videocaptureasync import VideoCaptureAsync  #VideoCaptureAsync implements separate thread for reading stream from camera
+from visionObjects.videocaptureasync import VideoCaptureAsync  #VideoCaptureAsync implements separate thread for reading stream from camera
 
 # The below function is responsible for implementing the Detecting the motion.
 def detectMotion(cap):
