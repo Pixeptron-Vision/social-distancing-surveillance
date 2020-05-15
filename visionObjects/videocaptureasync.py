@@ -9,7 +9,7 @@ class VideoCaptureAsync:
         self.grabbed, self.frame = self.cap.read()
         self.started = False
         #self.read_lock = threading.Lock()
-    
+
     def isOpened(self):
         return self.cap.isOpened()
 
@@ -27,16 +27,18 @@ class VideoCaptureAsync:
         return self
 
     def update(self):
-        while self.started and self.cap.isOpened():
-            try:
-                grabbed, frame = self.cap.read()
-#             with self.read_lock:
-                self.grabbed = grabbed
-                self.frame = frame
-            except cv2.error as err:
-                print(err)
-                self.stop()
-                break
+        while not self.cap.isOpened():
+            self.cap.release()
+            self.cap = cv2.VideoCapture(self.src)
+        while self.started :
+            grabbed, frame = self.cap.read()
+            self.grabbed = grabbed
+            self.frame = frame
+            if self.grabbed==False or self.isOpened()==False:
+                self.cap.release()
+                self.cap = cv2.VideoCapture(self.src)
+                cv2.waitKey(1000)
+
 
     def read(self):
 #         with self.read_lock:

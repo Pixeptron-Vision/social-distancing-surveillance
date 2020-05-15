@@ -11,8 +11,8 @@ while True:
     # ret, image = cap.read() #http://192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=60779
     # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-    cap = VideoCaptureAsync(src='cctv(2).mp4')
-    # cap = VideoCaptureAsync(src=0)
+    # cap = VideoCaptureAsync(src='cctv(2).mp4')
+    cap = VideoCaptureAsync(src=0)
     # This is responsible for starting up the thread and frame capturing process
     cap.start()
     if cap.isOpened():

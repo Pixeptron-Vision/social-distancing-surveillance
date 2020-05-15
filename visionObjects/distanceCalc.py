@@ -54,5 +54,5 @@ class d_Calc:
                 cv2.circle(frame1, (center[person_2_id[i]][0],
                                     center[person_2_id[i]][1]), 10, (0, 0, 255), -1)
             # Displaying the frames
-            cv2.imshow("Frame", frame1)
+            # cv2.imshow("Frame", frame1)
         return motion_status

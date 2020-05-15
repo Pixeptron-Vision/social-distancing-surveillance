@@ -3,7 +3,7 @@ import numpy as np
 
 
 class backgroundCalc:
-    def __init__(self, background_frames, mean_background_frame, frame_rate, desired_time_frame):
+    def __init__(self, background_frames=None, mean_background_frame=None, frame_rate=None, desired_time_frame=None):
         self.background_frames = background_frames
         self.mean_background_frame = mean_background_frame
         self.frame_rate = frame_rate

@@ -34,7 +34,6 @@ class detectMotionClass:
         ret, frame1 = cap.read()
         fid = 1
         frame1 = cv2.resize(frame1, (640, 480))
-        #global mean_background_frame
         mean_background_frame = frame1
         print("First frame Read")
         if not ret or frame1 is None:
