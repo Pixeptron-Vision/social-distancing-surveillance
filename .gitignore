@@ -1,3 +1,5 @@
 .ipynb_checkpoints/
 __pycache__/
 cctv(2).mp4
+testBackgroundDetection.py
+visionObjects/__pycache__/
