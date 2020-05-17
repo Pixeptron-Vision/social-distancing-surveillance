@@ -38,7 +38,7 @@ class FrameDisplay:
             else:
                 cv2.destroyWindow('Stream')
             if self.motion is not None :
-                cv2.imshow("Motion",self.motion)
+                cv2.imshow("Activity Detection",self.motion)
             else:
                 cv2.destroyWindow('Motion')
 

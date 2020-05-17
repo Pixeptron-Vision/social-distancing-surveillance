@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from threading import Thread
 
+
 class background:
 
     # Constructor of background Object
@@ -18,14 +19,15 @@ class background:
         self.append_static_frame(initial_frame, self.fid)
 
     def start(self):
-            if self.started:
-                print('[!] Background Update is running')
-                return None
-            self.started = True
-            self.thread = Thread(target=self.update_background,name='BU_thread',args=())
-            self.thread.daemon = True
-            self.thread.start()
-            return self
+        if self.started:
+            print('[!] Background Update is running')
+            return None
+        self.started = True
+        self.thread = Thread(target=self.update_background,
+                             name='BU_thread', args=())
+        self.thread.daemon = True
+        self.thread.start()
+        return self
 
     # def back_append_thread(self,current_frame):
     #     self.current_frame = current_frame
@@ -36,7 +38,7 @@ class background:
     #     return append_thread
 
     # Method to determine static frames
-    def background_filter(self,current_frame=None):
+    def background_filter(self, current_frame=None):
         # motion_status = self.motion_status #Not needed/Extra variable
         previous_frame = self.previous_frame
         if current_frame is not None:
@@ -55,7 +57,8 @@ class background:
         self.motion_frame = threst_delta
         # Currently no dilation
         dilated = cv2.dilate(threst_delta, None, iterations=0)
-        contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # Checking for motion frame
         motion_status = self.is_static_frame(contours)
@@ -64,8 +67,6 @@ class background:
             self.append_static_frame(self.current_frame, self.fid)
         # To ensure subsequent frame comparision
         self.previous_frame = self.current_frame
-
-
 
     def is_static_frame(self, contours):
         for cnt in contours:
@@ -81,23 +82,21 @@ class background:
     def append_static_frame(self, frame, fid):
         self.static_frames[fid] = frame
 
-
     def update_background(self, fps=15, threshold_time_frame=40):
-        while self.started:
-            # if no of frames in static_frames > threshold no of frames to update
-            if len(self.static_frames) > fps * threshold_time_frame:
-                # Taking the mean of background frames using the frame id
-                static_frames_ids = []
-                for i in sorted(self.static_frames.keys()):
-                    static_frames_ids.append(i)
-                np_static_frames_ids = np.array(static_frames_ids)
-                # mean frame id of background
-                mean_id = int(np.mean(np_static_frames_ids))
-                np_static_frames_ids = np_static_frames_ids[np_static_frames_ids >= mean_id]
-                # mean background frame itself
-                self.mean_background_frame = self.static_frames[np_static_frames_ids[0]]
-                # Clearing background list and appending new background to it
-                self.clear_static_frames()
+        # if no of frames in static_frames > threshold no of frames to update
+        if len(self.static_frames) > fps * threshold_time_frame:
+            # Taking the mean of background frames using the frame id
+            static_frames_ids = []
+            for i in sorted(self.static_frames.keys()):
+                static_frames_ids.append(i)
+            np_static_frames_ids = np.array(static_frames_ids)
+            # mean frame id of background
+            mean_id = int(np.mean(np_static_frames_ids))
+            np_static_frames_ids = np_static_frames_ids[np_static_frames_ids >= mean_id]
+            # mean background frame itself
+            self.mean_background_frame = self.static_frames[np_static_frames_ids[0]]
+            # Clearing background list and appending new background to it
+            self.clear_static_frames()
 
     def get_background_frame(self):
         return self.mean_background_frame
@@ -110,5 +109,6 @@ class background:
 
         self.fid = 0
         self.append_static_frame(self.mean_background_frame, self.fid)
+
     def stop(self):
-        self.started=False
+        self.started = False
