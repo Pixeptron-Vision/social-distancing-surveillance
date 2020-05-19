@@ -8,6 +8,7 @@ class FrameDisplay:
         self.stream = None
         self.motion = None
         self.background = None
+        self.act_frame_diff=None
         self.started = False
         error = cv2.imread('stream_error.jpg')
         error = cv2.resize(error,(640,480))
@@ -48,16 +49,22 @@ class FrameDisplay:
             else:
                 cv2.destroyWindow('Background')
 
+            if self.act_frame_diff is not None :
+                cv2.imshow("act_frame_diff",self.act_frame_diff)
+            else:
+                cv2.destroyWindow('act_frame_diff')
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                     self.stop()
                     self.user_exit = True
                     # sys.exit(0)
                     break
 
-    def update(self,frame1,threst_delta,mean_background_frame):
+    def update(self,frame1,threst_delta,mean_background_frame,act_frame_diff):
         self.stream = frame1
         self.motion = threst_delta
         self.background = mean_background_frame
+        self.act_frame_diff=act_frame_diff
         return self.user_exit
 
     def display_error(self):

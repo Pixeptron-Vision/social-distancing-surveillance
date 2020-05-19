@@ -85,7 +85,7 @@ def detectMotion(cap):
 
                 # Disaply the frames and read is user presses q/exit
                 user_exit = display_obj.update(
-                    boxed_current_frame, motion_frame, background_frame)
+                    boxed_current_frame, motion_frame, background_frame,act_frame_diff)
 
                 # Choosing next frame
                 prev_frame = current_frame
@@ -110,7 +110,7 @@ display_obj = FrameDisplay().start()
 
 # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
 # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-cap = VideoCaptureAsync(src='test_1.avi')
+cap = VideoCaptureAsync(src='../PNNLParkingLot2.avi')
 # cap = VideoCaptureAsync(src=0)
 # This is responsible for starting up the thread and frame capturing process
 cap.start()
