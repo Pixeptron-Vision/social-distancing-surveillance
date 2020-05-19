@@ -6,10 +6,12 @@ def activity_filter(current_frame, background_frame):
 
     # Resizing the frames
     background_frame = cv2.resize(background_frame, (640, 480))
+    background_frame = cv2.cvtColor(background_frame, cv2.COLOR_BGR2GRAY)
+    current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
     # Applying appropiate filters
     frame_diff = cv2.absdiff(background_frame, current_frame)
-    gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    # gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(frame_diff, (5, 5), 0)
     thresh_delta = cv2.threshold(blur, 50, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
     #kernel = np.ones((5,5),np.uint8)

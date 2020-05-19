@@ -58,7 +58,7 @@ def detectMotion(cap):
                 user_exit = display_obj.display_error()
 
             else:
-                print("fid - ", fid)
+                # print("fid - ", fid)
                 motion_status = False
                 # Resizing the frame
                 prev_frame = cv2.resize(prev_frame, (640, 480))
