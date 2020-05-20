@@ -4,17 +4,25 @@ from threading import Thread
 
 
 class background:
-
+    mean_background_frame = None
+    previous_background_frame = None
+    static_motion_frame = None
+    previous_frame = None
+    motion_frame = None
+    current_frame = None
+    static_frames = {}
+    motion_status = False
+    started = False
+    fid = 0
     # Constructor of background Object
+
     def __init__(self, initial_frame=None):
         # initial_frame = cv2.resize(initial_frame, (640, 480))
+        self.previous_background_frame = initial_frame
         self.mean_background_frame = initial_frame
+        self.static_motion_frame = self.update_static_motion(
+            self.mean_background_frame, self.previous_background_frame)
         self.previous_frame = initial_frame
-        self.motion_frame = None
-        self.current_frame = None
-        self.static_frames = {}
-        self.motion_status = False
-        self.started = False
         self.fid = 0
         self.append_static_frame(initial_frame, self.fid)
 
@@ -94,12 +102,23 @@ class background:
             mean_id = int(np.mean(np_static_frames_ids))
             np_static_frames_ids = np_static_frames_ids[np_static_frames_ids >= mean_id]
             # mean background frame itself
+            self.previous_background_frame = self.mean_background_frame
             self.mean_background_frame = self.static_frames[np_static_frames_ids[0]]
+            self.static_motion_frame = self.update_static_motion(
+                self.mean_background_frame, self.previous_background_frame)
             # Clearing background list and appending new background to it
             self.clear_static_frames()
 
     def get_background_frame(self):
         return self.mean_background_frame
+
+    def update_static_motion(self, curr_background, prev_background):
+        curr_background = cv2.cvtColor(curr_background, cv2.COLOR_BGR2GRAY)
+        prev_background = cv2.cvtColor(prev_background, cv2.COLOR_BGR2GRAY)
+        return cv2.absdiff(curr_background, prev_background)
+
+    def get_static_motion_frame(self):
+        return self.static_motion_frame
 
     def get_motion_frame(self):
         return self.motion_frame

@@ -41,9 +41,10 @@ def detectMotion(cap):
         fid = 1
         frame1 = cv2.resize(frame1, (640, 480))
         # Set first frame as default background
+        #background_frame = cv2.imread('background.jpg', 1)
         background_frame = frame1
         # Initialize background update object and pass first frame
-        backUpdate_obj = background(frame1)
+        backUpdate_obj = background(background_frame)
         # Set previous frame to first frmae for starting conditions
         prev_frame = frame1
 
@@ -70,11 +71,11 @@ def detectMotion(cap):
                 backUpdate_obj.update_background()
 
                 background_frame = backUpdate_obj.get_background_frame()
-
+                static_motion_frame = backUpdate_obj.get_static_motion_frame()
                 #motion_frame = backUpdate_obj.get_motion_frame()
 
                 # Detect activity from current_frame and background_frame
-                contours, (centres, boxed_current_frame), motion_frame , act_frame_diff = activity_filter(
+                contours, (centres, boxed_current_frame), motion_frame, act_frame_diff = activity_filter(
                     current_frame, background_frame)
                 # Returns id of pairs violating the norms
                 pairs = calculate_dist(
@@ -85,7 +86,7 @@ def detectMotion(cap):
 
                 # Disaply the frames and read is user presses q/exit
                 user_exit = display_obj.update(
-                    boxed_current_frame, motion_frame, background_frame,act_frame_diff)
+                    boxed_current_frame, motion_frame, background_frame, act_frame_diff, static_motion_frame)
 
                 # Choosing next frame
                 prev_frame = current_frame
@@ -110,7 +111,7 @@ display_obj = FrameDisplay().start()
 
 # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
 # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-cap = VideoCaptureAsync(src='../PNNLParkingLot2.avi')
+cap = VideoCaptureAsync(src='../cctv.mp4')
 # cap = VideoCaptureAsync(src=0)
 # This is responsible for starting up the thread and frame capturing process
 cap.start()

@@ -2,17 +2,19 @@
 from threading import Thread
 import cv2
 
+
 class FrameDisplay:
     # def __init__(self,stream=None,motion=None,background=None):
     def __init__(self):
         self.stream = None
         self.motion = None
         self.background = None
-        self.act_frame_diff=None
+        self.act_frame_diff = None
+        self.static_motion_frame = None
         self.started = False
         error = cv2.imread('stream_error.jpg')
-        error = cv2.resize(error,(640,480))
-        self.error_image=error
+        error = cv2.resize(error, (640, 480))
+        self.error_image = error
         self.user_exit = False
 
         # cv2.namedWindow("Stream", cv2.WINDOW_AUTOSIZE)
@@ -26,7 +28,7 @@ class FrameDisplay:
             print('[!] Frame display has already been started.')
             return None
         self.started = True
-        self.thread = Thread(target=self.display,name='GUI_thread',args=())
+        self.thread = Thread(target=self.display, name='GUI_thread', args=())
         self.thread.daemon = True
         self.thread.start()
         return self
@@ -34,37 +36,43 @@ class FrameDisplay:
     def display(self):
         while self.started:
             # Displaying the frames
-            if self.stream is not None :
+            if self.stream is not None:
                 cv2.imshow("Stream", self.stream)
             else:
                 cv2.destroyWindow('Stream')
-            if self.motion is not None :
-                cv2.imshow("Activity Detection",self.motion)
+            if self.motion is not None:
+                cv2.imshow("Activity Detection", self.motion)
             else:
                 cv2.destroyWindow('Motion')
 
             # Displaying median background frame
-            if self.background is not None :
-                cv2.imshow("Background",self.background)
+            if self.background is not None:
+                cv2.imshow("Background", self.background)
             else:
                 cv2.destroyWindow('Background')
 
-            if self.act_frame_diff is not None :
-                cv2.imshow("act_frame_diff",self.act_frame_diff)
+            if self.act_frame_diff is not None:
+                cv2.imshow("act_frame_diff", self.act_frame_diff)
             else:
                 cv2.destroyWindow('act_frame_diff')
 
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                    self.stop()
-                    self.user_exit = True
-                    # sys.exit(0)
-                    break
+            if self.static_motion_frame is not None:
+                cv2.imshow("static_motion_frame", self.static_motion_frame)
+            else:
+                cv2.destroyWindow('static_motion_frame')
 
-    def update(self,frame1,threst_delta,mean_background_frame,act_frame_diff):
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                self.stop()
+                self.user_exit = True
+                # sys.exit(0)
+                break
+
+    def update(self, frame1, threst_delta, mean_background_frame, act_frame_diff, static_motion_frame):
         self.stream = frame1
         self.motion = threst_delta
         self.background = mean_background_frame
-        self.act_frame_diff=act_frame_diff
+        self.act_frame_diff = act_frame_diff
+        self.static_motion_frame = static_motion_frame
         return self.user_exit
 
     def display_error(self):
