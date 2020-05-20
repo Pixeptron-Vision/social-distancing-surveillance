@@ -10,7 +10,7 @@ def activity_filter(current_frame, background_frame):
     frame_diff = cv2.absdiff(background_frame, current_frame)
     gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
-    thresh_delta = cv2.threshold(blur, 50, 255, cv2.THRESH_BINARY)[1]
+    thresh_delta = cv2.threshold(blur, 50, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
     #kernel = np.ones((5,5),np.uint8)
     #erosion = cv2.erode(threst_delta,kernel,iterations = 1)
@@ -19,7 +19,7 @@ def activity_filter(current_frame, background_frame):
         dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Calculate centers of each contours
-    return (contours, calc_centers(contours, current_frame), dilated)
+    return (contours, calc_centers(contours, current_frame), dilated , frame_diff)
 
 
 def calc_centers(contours, current_frame):

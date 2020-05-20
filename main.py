@@ -74,7 +74,7 @@ def detectMotion(cap):
                 #motion_frame = backUpdate_obj.get_motion_frame()
 
                 # Detect activity from current_frame and background_frame
-                contours, (centres, boxed_current_frame), motion_frame = activity_filter(
+                contours, (centres, boxed_current_frame), motion_frame , act_frame_diff = activity_filter(
                     current_frame, background_frame)
                 # Returns id of pairs violating the norms
                 pairs = calculate_dist(
@@ -110,7 +110,7 @@ display_obj = FrameDisplay().start()
 
 # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
 # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-cap = VideoCaptureAsync(src='../Dataset/PNNLParkingLOT2.avi')
+cap = VideoCaptureAsync(src='test_1.avi')
 # cap = VideoCaptureAsync(src=0)
 # This is responsible for starting up the thread and frame capturing process
 cap.start()
