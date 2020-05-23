@@ -111,7 +111,7 @@ display_obj = FrameDisplay().start()
 
 # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
 # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-cap = VideoCaptureAsync(src='../cctv.mp4')
+cap = VideoCaptureAsync(src='../PNNLParkingLot2.avi')
 # cap = VideoCaptureAsync(src=0)
 # This is responsible for starting up the thread and frame capturing process
 cap.start()
