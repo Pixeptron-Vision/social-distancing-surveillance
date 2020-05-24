@@ -16,7 +16,7 @@ class FrameDisplay:
         error = cv2.resize(error, (640, 480))
         self.error_image = error
         self.user_exit = False
-
+        self.index=1
         # cv2.namedWindow("Stream", cv2.WINDOW_AUTOSIZE)
         # cv2.namedWindow("Motion", cv2.WINDOW_AUTOSIZE)
         # cv2.namedWindow("Background", cv2.WINDOW_AUTOSIZE)
@@ -37,9 +37,9 @@ class FrameDisplay:
         while self.started:
             # Displaying the frames
             if self.stream is not None:
-                cv2.imshow("Stream", self.stream)
+                cv2.imshow(str(self.index), self.stream)
             else:
-                cv2.destroyWindow('Stream')
+                cv2.destroyWindow(str(self.index))
             if self.motion is not None:
                 cv2.imshow("Activity Detection", self.motion)
             else:
@@ -79,7 +79,6 @@ class FrameDisplay:
         self.stream = self.error_image
         self.motion = None
         self.background = None
-        print('Apun Updated')
         return self.user_exit
 
     def stop(self):
