@@ -12,6 +12,8 @@ def activity_filter(current_frame, background_frame):
     current_frame_blur = cv2.GaussianBlur(current_frame, (5, 5), 0)
     # Applying appropiate filters
     frame_diff = cv2.absdiff(background_frame_blur, current_frame_blur)
+    # gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
+    #blur = cv2.GaussianBlur(frame_diff, (5, 5), 0)
     thresh_delta = cv2.threshold(
         frame_diff, 50, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
     activity = thresh_delta.copy()

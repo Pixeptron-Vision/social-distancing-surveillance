@@ -61,15 +61,19 @@ class background:
         gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
 
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
-        threst_delta = cv2.threshold(blur, 10, 255, cv2.THRESH_BINARY)[1]
+        threst_delta = cv2.threshold(
+            blur, 10, 255, cv2.THRESH_BINARY)[1]
         self.motion_frame = threst_delta
         # Currently no dilation
-        dilated = cv2.dilate(threst_delta, None, iterations=0)
+        kernel = np.ones((9, 9), np.uint8)
+        threst_delta = cv2.morphologyEx(threst_delta, cv2.MORPH_CLOSE, kernel)
+        erosion = cv2.erode(threst_delta, kernel, iterations=0)
+        dilated = cv2.dilate(erosion, kernel, iterations=3)
         contours, _ = cv2.findContours(
             dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # Checking for motion frame
-        motion_status = self.is_static_frame(contours)
+        motion_status = not self.is_static_frame(contours)
         # If the frame is not motion frame/ is static frame
         if not motion_status:
             self.append_static_frame(self.current_frame, self.fid)
@@ -82,10 +86,10 @@ class background:
             if cv2.contourArea(cnt) < 500:
                 continue
         # If motion contours are present, return True
-            return True
+            return False
         # After checking the contours,
         # If motion contours are absent, return False
-        return False
+        return True
 
     def append_static_frame(self, frame, fid):
         self.static_frames[fid] = frame

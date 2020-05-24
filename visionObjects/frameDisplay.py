@@ -7,6 +7,7 @@ class FrameDisplay:
     # def __init__(self,stream=None,motion=None,background=None):
     def __init__(self):
         self.stream = None
+        self.activity = None
         self.motion = None
         self.background = None
         self.act_frame_diff = None
@@ -40,22 +41,31 @@ class FrameDisplay:
                 cv2.imshow("Stream", self.stream)
             else:
                 cv2.destroyWindow('Stream')
-            if self.motion is not None:
-                cv2.imshow("Activity Detection", self.motion)
-            else:
-                cv2.destroyWindow('Motion')
 
-            # Displaying median background frame
+            # Display activity
+            if self.activity is not None:
+                cv2.imshow("Activity Detection", self.activity)
+            else:
+                cv2.destroyWindow('Activity Detection')
+
+            # Displaying background
             if self.background is not None:
                 cv2.imshow("Background", self.background)
             else:
                 cv2.destroyWindow('Background')
 
+            if self.motion is not None:
+                cv2.imshow("Motion", self.motion)
+            else:
+                cv2.destroyWindow('Motion')
+
+            # Display activity diff frame
             if self.act_frame_diff is not None:
                 cv2.imshow("act_frame_diff", self.act_frame_diff)
             else:
                 cv2.destroyWindow('act_frame_diff')
 
+            # Display Static motion Frame
             if self.static_motion_frame is not None:
                 cv2.imshow("static_motion_frame", self.static_motion_frame)
             else:
@@ -67,10 +77,11 @@ class FrameDisplay:
                 # sys.exit(0)
                 break
 
-    def update(self, frame1, threst_delta, mean_background_frame, act_frame_diff, static_motion_frame):
+    def update(self, frame1, activity_frame, mean_background_frame, motion_frame, act_frame_diff, static_motion_frame):
         self.stream = frame1
-        self.motion = threst_delta
+        self.activity = activity_frame
         self.background = mean_background_frame
+        self.motion = motion_frame
         self.act_frame_diff = act_frame_diff
         self.static_motion_frame = static_motion_frame
         return self.user_exit
