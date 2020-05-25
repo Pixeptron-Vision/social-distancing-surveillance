@@ -32,17 +32,19 @@ class VisionSurveillance:
         self.motion_status = False
         self.mean_background_frame = None
 
-    def start(self,index_count):
-        self.display_obj = FrameDisplay().start()
-        self.display_obj.index=index_count
-        self.cap = VideoCaptureAsync(src=self.src).start()
-        # self.backUpdate_obj = background()
-        return self
+    # def start(self):
+    #     # self.display_obj = FrameDisplay().start()
+    #     # self.display_obj.index=index_count
+    #     # self.cap = VideoCaptureAsync(src=self.src).start()
+    #     # self.backUpdate_obj = background()
+    #     self.started=True
+    #     return self
 
 
     def initialize_first_frame(self):
-        ret,frame = self.cap.read()
-        if not ret or frame is None:
+        # ret,frame = self.cap.read()
+        frame = cv2.imread('stream_error.jpg')
+        if frame is None:
             print("[INFO] Stream unavailable..!")
             user_exit = display_obj.display_error()
         else:
@@ -56,12 +58,15 @@ class VisionSurveillance:
             # Set previous frame to first frmae for starting conditions
             self.prev_frame = frame
 
-    def spawn_detection(self):
+    def spawn_detection(self,index_count):
         self.started=True
-        self.process = Process(target=self.detection,args=())
+        self.process = Process(target=self.detection,args=(index_count,))
         self.process.start()
-
-    def detection(self):
+#
+    def detection(self,index_count):
+        self.display_obj = FrameDisplay().start()
+        self.display_obj.index=index_count
+        self.cap = VideoCaptureAsync(src=self.src).start()
         while self.started:
 
             ret, current_frame = self.cap.read()
@@ -106,7 +111,7 @@ class VisionSurveillance:
                 self.started=False
                 self.cap.stop()
                 self.display_obj.stop()
-                self.thread.terminate()
+                # self.process.terminate()
 
     def __exit__(self):
         self.cap.stop()
@@ -117,23 +122,21 @@ if __name__ == '__main__':
     #Note: index is passed in start function as indexing is important
     #       at the time of frame display...as windows are named with index
     #       to avoid mixing and overriding of frames during display.
-    det1 = VisionSurveillance(src='../PNNLParkingLot2.avi').start(1)
-    # det2 = VisionSurveillance(src='../PNNL_Parking_LOT(1).avi').start(2)
-    # det3 = VisionSurveillance(src='../PNNLParkingLot2.avi').start(3)
-
+    det1 = VisionSurveillance(src='../PNNLParkingLot2.avi')
+    det2 = VisionSurveillance(src='../PNNL_Parking_LOT(1).avi')
+    det3 = VisionSurveillance(src='../PNNLParkingLot2.avi')
+    det4 = VisionSurveillance(src='../vid1.mp4')
     det1.initialize_first_frame()
-    # det2.initialize_first_frame()
-    # det3.initialize_first_frame()
+    det2.initialize_first_frame()
+    det3.initialize_first_frame()
+    det4.initialize_first_frame()
 
     # li = [det1,det2,det3]
-    li = [det1]
+    li = [det1,det2,det3,det4]
     breaker = False
-    number= 7
-    p = Process(target=det1.detection,args=(number,))
-    p.start()
-    p.join()
-    # for det in li:
-        # det.spawn_detection()
+
+    for count,det in enumerate(li):
+        det.spawn_detection(count)
 
 
     sys.exit(0)
