@@ -10,21 +10,21 @@ class background:
     previous_frame = None
     motion_frame = None
     current_frame = None
-    static_frames = {}
+    background_reference = None
     motion_status = False
     started = False
-    fid = 0
     # Constructor of background Object
 
     def __init__(self, initial_frame=None):
         # initial_frame = cv2.resize(initial_frame, (640, 480))
+        initial_frame = cv2.cvtColor(initial_frame, cv2.COLOR_BGR2GRAY)
         self.previous_background_frame = initial_frame
         self.mean_background_frame = initial_frame
         self.static_motion_frame = self.update_static_motion(
             self.mean_background_frame, self.previous_background_frame)
         self.previous_frame = initial_frame
-        self.fid = 0
-        self.append_static_frame(initial_frame, self.fid)
+        # For background reference
+        self.background_reference = initial_frame
 
     def start(self):
         if self.started:
@@ -50,16 +50,16 @@ class background:
         # motion_status = self.motion_status #Not needed/Extra variable
         previous_frame = self.previous_frame
         if current_frame is not None:
+            current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
             self.current_frame = current_frame
-            self.fid += 1
 
         # Resizing the frame
         # current_frame = cv2.resize(current_frame, (640, 480))
         # previous_frame = cv2.resize(previous_frame, (640, 480))
         # Applying appropiate filters
         frame_diff = cv2.absdiff(self.current_frame, previous_frame)
-        gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
-
+        #gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
+        gray = frame_diff
         blur = cv2.GaussianBlur(gray, (5, 5), 0)
         threst_delta = cv2.threshold(
             blur, 10, 255, cv2.THRESH_BINARY)[1]
@@ -76,7 +76,7 @@ class background:
         motion_status = not self.is_static_frame(contours)
         # If the frame is not motion frame/ is static frame
         if not motion_status:
-            self.append_static_frame(self.current_frame, self.fid)
+            self.recalculate_ref(self.current_frame)
         # To ensure subsequent frame comparision
         self.previous_frame = self.current_frame
 
@@ -91,34 +91,33 @@ class background:
         # If motion contours are absent, return False
         return True
 
-    def append_static_frame(self, frame, fid):
-        self.static_frames[fid] = frame
+    def recalculate_ref(self, frame):
+        # New implementation
+        background_reference_copy = self.background_reference
+        # Convertion to float for rudimentary operations
+        frame = frame.astype(float)
+        background_reference_copy = background_reference_copy.astype(float)
+        alpha = 0.7
+        new_background_reference = alpha * \
+            background_reference_copy + (1-alpha)*frame
+        new_background_reference = np.round(new_background_reference)
+        # Saving the new reference
+        self.background_reference = np.uint8(new_background_reference)
 
     def update_background(self, fps=15, threshold_time_frame=40):
-        # if no of frames in static_frames > threshold no of frames to update
-        if len(self.static_frames) > fps * threshold_time_frame:
-            # Taking the mean of background frames using the frame id
-            static_frames_ids = []
-            for i in sorted(self.static_frames.keys()):
-                static_frames_ids.append(i)
-            np_static_frames_ids = np.array(static_frames_ids)
-            # mean frame id of background
-            mean_id = int(np.mean(np_static_frames_ids))
-            np_static_frames_ids = np_static_frames_ids[np_static_frames_ids >= mean_id]
-            # mean background frame itself
-            self.previous_background_frame = self.mean_background_frame
-            self.mean_background_frame = self.static_frames[np_static_frames_ids[0]]
-            self.static_motion_frame = self.update_static_motion(
-                self.mean_background_frame, self.previous_background_frame)
-            # Clearing background list and appending new background to it
-            self.clear_static_frames()
+            # Saving new previous background frame itself
+        self.previous_background_frame = self.mean_background_frame
+        # Saving new background frame
+        self.mean_background_frame = self.background_reference
+        self.static_motion_frame = self.update_static_motion(
+            self.mean_background_frame, self.previous_background_frame)
 
     def get_background_frame(self):
         return self.mean_background_frame
 
     def update_static_motion(self, curr_background, prev_background):
-        curr_background = cv2.cvtColor(curr_background, cv2.COLOR_BGR2GRAY)
-        prev_background = cv2.cvtColor(prev_background, cv2.COLOR_BGR2GRAY)
+        #curr_background = cv2.cvtColor(curr_background, cv2.COLOR_BGR2GRAY)
+        #prev_background = cv2.cvtColor(prev_background, cv2.COLOR_BGR2GRAY)
         return cv2.absdiff(curr_background, prev_background)
 
     def get_static_motion_frame(self):
@@ -126,12 +125,6 @@ class background:
 
     def get_motion_frame(self):
         return self.motion_frame
-
-    def clear_static_frames(self):
-        self.static_frames.clear()
-
-        self.fid = 0
-        self.append_static_frame(self.mean_background_frame, self.fid)
 
     def stop(self):
         self.started = False

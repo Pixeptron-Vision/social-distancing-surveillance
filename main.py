@@ -49,10 +49,11 @@ def detectMotion(cap):
         prev_frame = frame1
 
         print("First frame Read")
-
+        start = time.time()
+        print(start)
         while True:
             # Read second and subsequent frames
-            beg = time.time()
+
             ret, current_frame = cap.read()
             if not ret or current_frame is None:
                 print("[INFO] Cam IP Stream unavailable...")
@@ -68,7 +69,9 @@ def detectMotion(cap):
 
                 # Update the background and append current frame if no motion
                 backUpdate_obj.background_filter(current_frame)
-                backUpdate_obj.update_background()
+                if time.time() - start >= desired_time_frame:
+                    backUpdate_obj.update_background()
+                    start = time.time()
 
                 background_frame = backUpdate_obj.get_background_frame()
                 static_motion_frame = backUpdate_obj.get_static_motion_frame()
@@ -76,7 +79,7 @@ def detectMotion(cap):
                 motion_frame = backUpdate_obj.get_motion_frame()
                 # Detect activity from current_frame and background_frame
                 contours, (centres, boxed_current_frame), activity_frame, act_frame_diff = activity_filter(
-                    current_frame, background_frame)
+                    current_frame, background_frame, static_motion_frame)
                 # Returns id of pairs violating the norms
                 pairs = calculate_dist(
                     boxed_current_frame, centres, threshold_dist)

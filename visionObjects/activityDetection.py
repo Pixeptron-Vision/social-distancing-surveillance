@@ -1,17 +1,24 @@
 import cv2
 import numpy as np
+from skimage.morphology import skeletonize
+from skimage import data
+import matplotlib.pyplot as plt
+from skimage.util import invert
 
 
-def activity_filter(current_frame, background_frame):
+def activity_filter(current_frame, background_frame, static_motion_frame):
 
     # Resizing the frames
     background_frame = cv2.resize(background_frame, (640, 480))
-    background_frame = cv2.cvtColor(background_frame, cv2.COLOR_BGR2GRAY)
+    static_motion_frame = cv2.resize(static_motion_frame, (640, 480))
+    #background_frame = cv2.cvtColor(background_frame, cv2.COLOR_BGR2GRAY)
     current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
     background_frame_blur = cv2.GaussianBlur(background_frame, (5, 5), 0)
     current_frame_blur = cv2.GaussianBlur(current_frame, (5, 5), 0)
     # Applying appropiate filters
     frame_diff = cv2.absdiff(background_frame_blur, current_frame_blur)
+    # Static motion frame also taken into account for difference
+    frame_diff = cv2.absdiff(frame_diff, static_motion_frame)
     # gray = cv2.cvtColor(frame_diff, cv2.COLOR_BGR2GRAY)
     #blur = cv2.GaussianBlur(frame_diff, (5, 5), 0)
     thresh_delta = cv2.threshold(
