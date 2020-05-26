@@ -17,16 +17,19 @@ from visionObjects.activityDetection import activity_filter, calc_centers
 # The below function is responsible for implementing the Detecting the motion.
 timeDuration = dt.timedelta(seconds=20)
 desired_time_frame = int(timeDuration.seconds)
-#desired_time_frame = 10
-frame_rate = 15
 threshold_dist = 75
 # For background frame, intialising a background_frames dictionary
-background_frames = {}
 motion_status = False
 mean_background_frame = None
 
 
 def detectMotion(cap):
+
+    # Safety Message Service Variables
+    safety_ok = True
+    safety_status_msg = False
+    unsafe_timer = None
+    safety_threshold_time = int(dt.timedelta(hours=1))
 
     ret, frame1 = cap.read()
     if not ret or frame1 is None:
@@ -36,7 +39,6 @@ def detectMotion(cap):
             cap.stop()
             display_obj.stop()
             sys.exit(0)
-
     else:
         fid = 1
         frame1 = cv2.resize(frame1, (640, 480))
@@ -86,6 +88,27 @@ def detectMotion(cap):
                 # Note: pairs has id index of contour center in centres list
                 # persion_1_id = pairs[0] - a nx1 array
                 # persion_2_id = pairs[1] - a nx1 array
+
+                # Code for Anamaly Detection and Alert System
+                # if (Anamaly Detection Condition) == True:
+                #    safety_ok = False
+                #    if unsafe_timer is None:
+                #        unsafe_timer = time.time()
+                # else:
+                #    safety_ok = True
+
+                # if safety_ok == False:
+                #    if unsafe_timer - time.time() >= safety_threshold_time:
+                #        safety_status_msg = True
+                #    else:
+                #        safety_status_msg = False
+                # else:
+                #    unsafe_timer = None
+                #    safety_status_msg = False
+
+                # if safety_status_msg == True:
+                #    Safety Service Routine Code
+                #    pass
 
                 # Disaply the frames and read is user presses q/exit
                 user_exit = display_obj.update(

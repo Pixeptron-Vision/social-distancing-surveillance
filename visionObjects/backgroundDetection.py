@@ -104,7 +104,7 @@ class background:
         # Saving the new reference
         self.background_reference = np.uint8(new_background_reference)
 
-    def update_background(self, fps=15, threshold_time_frame=40):
+    def update_background(self):
             # Saving new previous background frame itself
         self.previous_background_frame = self.mean_background_frame
         # Saving new background frame
