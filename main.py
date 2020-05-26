@@ -27,8 +27,10 @@ def detectMotion(cap):
 
     # Safety Message Service Variables
     safety_ok = True
-    safety_status_msg = False
+    unsafety_status_msg = None
     unsafe_timer = None
+    safe_timer = None
+    unsafety_threshold_time = int(dt.timedelta(hours=1))
     safety_threshold_time = int(dt.timedelta(hours=1))
 
     ret, frame1 = cap.read()
@@ -94,21 +96,38 @@ def detectMotion(cap):
                 #    safety_ok = False
                 #    if unsafe_timer is None:
                 #        unsafe_timer = time.time()
+                #        safe_timer = None
                 # else:
                 #    safety_ok = True
+                #    if safe_timer is None:
+                #        safe_timer = time.time()
+                #        unsafe_timer = None
 
                 # if safety_ok == False:
-                #    if unsafe_timer - time.time() >= safety_threshold_time:
-                #        safety_status_msg = True
-                #    else:
-                #        safety_status_msg = False
+                #    unsafety_status_msg = True
                 # else:
-                #    unsafe_timer = None
-                #    safety_status_msg = False
+                #    if safe_timer - time.time() >= safety_threshold_time:
+                #        unsafety_status_msg = False
+                #        safe_timer = time.time() #Timer is reset to recalculate after every threshold time
+                #    else:
+                #        unsafety_status_msg = None
 
-                # if safety_status_msg == True:
-                #    Safety Service Routine Code
-                #    pass
+                '''
+                Value representation of unsafety_status_msg:
+                1.If unsafety_status_msg == NONE
+                    This represents that the variable is reset.
+                    There is no unsafe condition occuring.
+                    Safe condition is occuring but less than threshold amount of time
+                2.If unsafety_status_msg == False
+                    This represents that Safe condition has occured for Threshold amount of time
+                3.If unsafety_status_msg == True 
+                    This represents that Unsafe conditions are occuring right now.
+                '''
+                # if unsafety_status_msg is not None:
+                #    if unsafety_status_msg == True:
+                #        # Alert Unsafe Right Now
+                #    else:
+                #        # Alert Safe for one hour (Threshold time)
 
                 # Disaply the frames and read is user presses q/exit
                 user_exit = display_obj.update(
