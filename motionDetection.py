@@ -150,11 +150,11 @@ if __name__ == '__main__':
     # and each object det is for each different cameras
     stream_objects = []
     for i in sources:
-        det = VisionSurveillance(odapi,src=i)
+        det = VisionSurveillance(src=i)
         stream_objects.append(det)
 
 
-    for count,det in enumerate(li):
+    for count,det in enumerate(stream_objects):
         det.spawn_detection(count)
 
 
