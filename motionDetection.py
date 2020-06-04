@@ -12,10 +12,13 @@ from multiprocessing import Process
 from visionObjects.videocaptureasync import VideoCaptureAsync
 from visionObjects.frameDisplay import FrameDisplay
 from visionObjects.distanceCalc import calculate_dist
-from visionObjects.backgroundDetection import background
-#from visionObjects.streamError import display_stream_error
-from visionObjects.activityDetection import activity_filter, calc_centers
 
+from human_detector import DetectorAPI
+from human_detector import centre_calcualtion
+
+
+model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
+detection_confidence = 0.4
 
 class VisionSurveillance:
 
@@ -31,32 +34,8 @@ class VisionSurveillance:
         self.background_frames = {}
         self.motion_status = False
         self.mean_background_frame = None
+        self.fid=0
 
-    # def start(self):
-    #     # self.display_obj = FrameDisplay().start()
-    #     # self.display_obj.index=index_count
-    #     # self.cap = VideoCaptureAsync(src=self.src).start()
-    #     # self.backUpdate_obj = background()
-    #     self.started=True
-    #     return self
-
-
-    def initialize_first_frame(self):
-        ret,frame = self.cap.read()
-        # frame = cv2.imread('stream_error.jpg')
-        if frame is None:
-            print("[INFO] Stream unavailable..!")
-            user_exit = display_obj.display_error()
-        else:
-            self.fid = 1
-            frame = cv2.resize(frame, (640, 480))
-            # Set first frame as default background
-            #background_frame = cv2.imread('background.jpg', 1)
-            self.background_frame = frame
-            # Initialize background update object and pass first frame
-            self.backUpdate_obj = background(self.background_frame)
-            # Set previous frame to first frmae for starting conditions
-            self.prev_frame = frame
 
     def spawn_detection(self,index_count):
         self.started=True
@@ -67,47 +46,83 @@ class VisionSurveillance:
         self.display_obj = FrameDisplay().start()
         self.display_obj.index=index_count
         self.cap = VideoCaptureAsync(src=self.src).start()
-        self.initialize_first_frame()
+        # self.initialize_first_frame()
+        self.odapi = DetectorAPI(path_to_ckpt=model_path)
+
+        # Safety Message Service Variables
+        safety_ok = True
+        unsafety_status_msg = None
+        unsafe_timer = None
+        safe_timer = None
+        # unsafety_threshold_time = int(dt.timedelta(hours=1))
+        # safety_threshold_time = int(dt.timedelta(hours=1))
 
         while self.started:
 
             ret, current_frame = self.cap.read()
             if not ret or current_frame is None:
-                print("[INFO] Cam IP Stream unavailable...")
+                # print("[INFO] Cam IP Stream unavailable...")
                 user_exit = self.display_obj.display_error()
 
             else:
                 # print("fid - ", fid)
-                self.motion_status = False
                 # Resizing the frame
-                self.prev_frame = cv2.resize(self.prev_frame, (640, 480))
-                current_frame = cv2.resize(current_frame, (640, 480))
-                # back_append_thread = backUpdate_obj.back_append_thread(current_frame)
+                # current_frame = cv2.resize(current_frame, (640, 480))
+                current_frame = cv2.resize(current_frame, (300, 300))
 
-                # Update the background and append current frame if no motion
-                self.backUpdate_obj.background_filter(current_frame)
-                self.backUpdate_obj.update_background()
+                boxes, scores, classes, num = self.odapi.processFrame(current_frame)
 
-                self.background_frame = self.backUpdate_obj.get_background_frame()
-                # static_motion_frame = self.backUpdate_obj.get_static_motion_frame()
-                #motion_frame = backUpdate_obj.get_motion_frame()
+                centres,current_frame=centre_calcualtion(boxes,scores,classes,current_frame,detection_confidence)
 
-                # Detect activity from current_frame and background_frame
-                contours, (centres, boxed_current_frame), motion_frame, act_frame_diff = activity_filter(
-                    current_frame, self.background_frame)
                 # Returns id of pairs violating the norms
                 pairs = calculate_dist(
-                    boxed_current_frame, centres, self.threshold_dist)
+                    current_frame, centres, self.threshold_dist)
                 # Note: pairs has id index of contour center in centres list
                 # persion_1_id = pairs[0] - a nx1 array
                 # persion_2_id = pairs[1] - a nx1 array
 
-                # Disaply the frames and read is user presses q/exit
-                user_exit = self.display_obj.update(
-                    boxed_current_frame, None,None, None,None)
+                # Code for Anamaly Detection and Alert System
+                # if (Anamaly Detection Condition) == True:
+                #    safety_ok = False
+                #    if unsafe_timer is None:
+                #        unsafe_timer = time.time()
+                #        safe_timer = None
+                # else:
+                #    safety_ok = True
+                #    if safe_timer is None:
+                #        safe_timer = time.time()
+                #        unsafe_timer = None
 
-                # Choosing next frame
-                self.prev_frame = current_frame
+                # if safety_ok == False:
+                #    unsafety_status_msg = True
+                # else:
+                #    if safe_timer - time.time() >= safety_threshold_time:
+                #        unsafety_status_msg = False
+                #        safe_timer = time.time() #Timer is reset to recalculate after every threshold time
+                #    else:
+                #        unsafety_status_msg = None
+
+                '''
+                Value representation of unsafety_status_msg:
+                1.If unsafety_status_msg == NONE
+                    This represents that the variable is reset.
+                    There is no unsafe condition occuring.
+                    Safe condition is occuring but less than threshold amount of time
+                2.If unsafety_status_msg == False
+                    This represents that Safe condition has occured for Threshold amount of time
+                3.If unsafety_status_msg == True
+                    This represents that Unsafe conditions are occuring right now.
+                '''
+                # if unsafety_status_msg is not None:
+                #    if unsafety_status_msg == True:
+                #        # Alert Unsafe Right Now
+                #    else:
+                #        # Alert Safe for one hour (Threshold time)
+
+                # Disaply the frames and read is user presses q/exit
+                user_exit = self.display_obj.update(current_frame)
+
+
                 self.fid += 1
 
             if user_exit == True:
@@ -126,13 +141,10 @@ if __name__ == '__main__':
     #       at the time of frame display...as windows are named with index
     #       to avoid mixing and overriding of frames during display.
     det1 = VisionSurveillance(src='../PNNLParkingLot2.avi')
-    det2 = VisionSurveillance(src='../vid1.mp4')
-    det3 = VisionSurveillance(src='../vid2.mp4')
+    det2 = VisionSurveillance(src='../walking.avi')
+    det3 = VisionSurveillance(src='../vid_short.mp4')
     det4 = VisionSurveillance(src='../PNNL_Parking_LOT(1).avi')
-    # det1.initialize_first_frame()
-    # det2.initialize_first_frame()
-    # det3.initialize_first_frame()
-    # det4.initialize_first_frame()
+
 
     # li = [det1,det2,det3]
     li = [det1,det2,det3,det4]

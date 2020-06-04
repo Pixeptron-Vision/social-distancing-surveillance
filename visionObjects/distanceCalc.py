@@ -11,9 +11,10 @@ def calculate_dist(boxed_current_frame, center,threshold_dist):
         D = distance.pdist(center)
         D = distance.squareform(D)
 
-        # ignore the upper triangle as the matrix will be symmetric so yo avoid repetation of pairs
+        # ignore/mask the upper triangle with 0 as the matrix will be symmetric so yo avoid repetation of pairs
         upper_tri = np.triu_indices(N, 0)
-        D[upper_tri] = threshold_dist+100
+        #Add 1000 to increase value of upper triangle such thay it does not comes less than threshold
+        D[upper_tri] = threshold_dist+1000
         pairs = np.where(D < threshold_dist)
 
         person_1_id = pairs[0]
