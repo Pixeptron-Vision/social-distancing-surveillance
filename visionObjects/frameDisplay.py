@@ -12,6 +12,7 @@ class FrameDisplay:
         error = cv2.resize(error, (300, 300))
         self.error_image = error
         self.user_exit = False
+        self.index=1
 
         # cv2.namedWindow("Stream", cv2.WINDOW_AUTOSIZE)
         #self.read_lock = threading.Lock()
@@ -30,9 +31,9 @@ class FrameDisplay:
         while self.started:
             # Displaying the frames
             if self.stream is not None:
-                cv2.imshow("Stream", self.stream)
+                cv2.imshow(str(self.index), self.stream)
             else:
-                cv2.destroyWindow('Stream')
+                cv2.destroyWindow(str(self.index))
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 self.stop()

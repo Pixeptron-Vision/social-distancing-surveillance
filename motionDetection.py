@@ -72,7 +72,7 @@ class VisionSurveillance:
 
                 boxes, scores, classes, num = self.odapi.processFrame(current_frame)
 
-                centres,current_frame=centre_calcualtion(boxes,scores,classes,current_frame,detection_confidence)
+                centres,current_frame =centre_calcualtion(boxes,scores,classes,current_frame,detection_confidence)
 
                 # Returns id of pairs violating the norms
                 pairs = calculate_dist(
@@ -137,18 +137,22 @@ class VisionSurveillance:
 
 
 if __name__ == '__main__':
-    #Note: index is passed in start function as indexing is important
+    #Note: index is passed in spawn function as indexing is important
     #       at the time of frame display...as windows are named with index
     #       to avoid mixing and overriding of frames during display.
-    det1 = VisionSurveillance(src='../PNNLParkingLot2.avi')
-    det2 = VisionSurveillance(src='../walking.avi')
-    det3 = VisionSurveillance(src='../vid_short.mp4')
-    det4 = VisionSurveillance(src='../PNNL_Parking_LOT(1).avi')
 
 
-    # li = [det1,det2,det3]
-    li = [det1,det2,det3,det4]
-    breaker = False
+    sources = ['../PNNLParkingLot2.avi',
+                '../walking.avi',
+                '../vid_short.mp4',
+                '../PNNL_Parking_LOT(1).avi']
+    # The below objects are the instance of VisionSurveillance visionObjects
+    # and each object det is for each different cameras
+    stream_objects = []
+    for i in sources:
+        det = VisionSurveillance(odapi,src=i)
+        stream_objects.append(det)
+
 
     for count,det in enumerate(li):
         det.spawn_detection(count)
