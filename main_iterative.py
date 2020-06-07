@@ -131,10 +131,22 @@ if __name__ == '__main__':
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
 
 
-    sources = ['../PNNLParkingLot2.avi',
-                '../walking.avi',
-                '../vid_short.mp4',
-                '../PNNL_Parking_LOT(1).avi']
+    sources = ['rtsp://service:Tata!123@192.168.49.27/1',
+                'rtsp://service:Tata!123@192.168.49.28/1',
+                'rtsp://service:Tata!123@192.168.49.29/1',
+                'rtsp://service:Tata!123@192.168.49.30/1',
+                'rtsp://service:Tata!123@192.168.49.31/1',
+                'rtsp://service:Tata!123@192.168.49.32/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1',
+                'rtsp://service:Tata!123@192.168.51.5/1']
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
