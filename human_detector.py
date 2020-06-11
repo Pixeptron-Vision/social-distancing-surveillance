@@ -4,7 +4,7 @@
 
 import os
 # Suppress TF warnings
-# os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import numpy as np
 import tensorflow as tf
@@ -12,13 +12,13 @@ import cv2
 import time
 
 
-def centre_calcualtion(boxes,scores,classes, img,threshold):
+def centre_calcualtion(boxes,scores,classes,num, img,threshold):
     centers = []
     # boxed_current_frame = current_frame.copy()
     totalContourArea = 0
     thresh_activity = 0.5
 
-    for i in range(len(boxes)):
+    for i in range(num):
             # Class 1 represents human
             if classes[i] == 1 and scores[i] > threshold:
                 box = boxes[i]

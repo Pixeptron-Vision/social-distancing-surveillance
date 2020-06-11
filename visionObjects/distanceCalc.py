@@ -22,9 +22,9 @@ def calculate_dist(boxed_current_frame, center,threshold_dist):
         # print(len(pairs))
         for i in range(len(person_1_id)):
             cv2.circle(boxed_current_frame, (center[person_1_id[i]][0],
-                                    center[person_1_id[i]][1]), 10, (0, 0, 255), -1)
+                                    center[person_1_id[i]][1]), 2, (0, 0, 255), -1)
             cv2.circle(boxed_current_frame, (center[person_2_id[i]][0],
-                                    center[person_2_id[i]][1]), 10, (0, 0, 255), -1)
+                                    center[person_2_id[i]][1]), 2, (0, 0, 255), -1)
         # Displaying the frames
         # cv2.imshow("Frame", frame1)
     return pairs
