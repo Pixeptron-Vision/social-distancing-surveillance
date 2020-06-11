@@ -13,8 +13,9 @@ from visionObjects.videocaptureasync import VideoCaptureAsync
 from visionObjects.frameDisplay import FrameDisplay
 from visionObjects.distanceCalc import calculate_dist
 
-from human_detector import DetectorAPI
-from human_detector import centre_calcualtion
+#from human_detector import DetectorAPI
+#from human_detector import centre_calcualtion
+from ui_trial import * 
 
 model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
 detection_confidence = 0.4
@@ -54,16 +55,15 @@ class VisionSurveillance:
         else:
             # print("fid - ", fid)
             # Resizing the frame
-            # current_frame = cv2.resize(current_frame, (640, 480))
-            current_frame = cv2.resize(current_frame, (300, 300))
+            current_frame = cv2.resize(current_frame, (640, 480))
+            #current_frame = cv2.resize(current_frame, (300, 300))
 
             boxes, scores, classes, num = self.odapi.processFrame(current_frame)
 
             centres,current_frame =centre_calcualtion(boxes,scores,classes,current_frame,detection_confidence)
 
             # Returns id of pairs violating the norms
-            pairs = calculate_dist(
-                current_frame, centres, self.threshold_dist)
+            pairs = calculate_dist(current_frame, centres, self.threshold_dist)
             # Note: pairs has id index of contour center in centres list
             # persion_1_id = pairs[0] - a nx1 array
             # persion_2_id = pairs[1] - a nx1 array
@@ -110,7 +110,7 @@ class VisionSurveillance:
             user_exit = self.display_obj.update(current_frame)
             self.fid += 1
 
-        return user_exit
+        return user_exit, current_frame
 
 
     def __exit__(self):
@@ -130,7 +130,7 @@ if __name__ == '__main__':
     # Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
 
-
+    '''
     sources = ['rtsp://service:Tata!123@192.168.49.27/1',
                 'rtsp://service:Tata!123@192.168.49.28/1',
                 'rtsp://service:Tata!123@192.168.49.29/1',
@@ -147,12 +147,25 @@ if __name__ == '__main__':
                 'rtsp://service:Tata!123@192.168.51.5/1',
                 'rtsp://service:Tata!123@192.168.51.5/1',
                 'rtsp://service:Tata!123@192.168.51.5/1']
+    '''
+
+    sources = ['../Dataset/cctv4.mp4',
+                '../Dataset/cctv3.avi']
+    
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+
+    odapi = None
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
-    for i in sources:
+    for index,i in enumerate(sources):
         det = VisionSurveillance(odapi,src=i)
         stream_objects.append(det)
+        ui.addCamera(index, i)
 
     #Note: index is passed in start function as indexing is important
     #       at the time of frame display...as windows are named with index
@@ -162,14 +175,22 @@ if __name__ == '__main__':
     # breaker is used to read exit command from users
     breaker = False
 
+
     # while loop to run for each frame for all cameras for unlimited time
     while True:
 
-        for det in stream_objects:
-            user_exit = det.detection()
+        for i, det in enumerate(stream_objects):
+            user_exit, current_frame = det.detection()
+            #frame = cv2.resize(current_frame, (640, 480))
+            frame = ConvertFrametoQtFrame(current_frame)
+            ui.setLabeltoFrame(frame, ui.getCameraWidget(i).camera)
+            if i == ui.selectedIndex:
+                ui.setLabeltoFrame(frame, ui.mainDisplay)
+                ui.setDescription(i)
             if user_exit:
                 breaker=True
                 sys.exit(0)
                 # break
+        cv2.waitKey(1)
 
-    sys.exit(0)
+    sys.exit(app.exec_())
