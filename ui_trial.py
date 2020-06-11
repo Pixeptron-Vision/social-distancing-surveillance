@@ -10,13 +10,15 @@ import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 class ExtendedQGroupBox(QtWidgets.QGroupBox):
-    currentQtFrame = 'default.jpg'
+    defaultFrame = "default.jpg"
+    currentQtFrame = None
     camera_id = None
     camera_ip = ''
     camera_tag = None
     humans = 0
     unsafeHumans = 0
     safeHumans = 0
+    status = None
     clicked = QtCore.pyqtSignal()
     
     def __init__(self, camera_id, camera_ip):
@@ -49,7 +51,7 @@ class ExtendedQGroupBox(QtWidgets.QGroupBox):
         self.camera.setFrameShape(QtWidgets.QFrame.Box)
         self.camera.setLineWidth(1)
         self.camera.setText("")
-        self.camera.setPixmap(QtGui.QPixmap(self.currentQtFrame))
+        self.camera.setPixmap(QtGui.QPixmap(self.defaultFrame))
         self.camera.setScaledContents(True)
         self.camera.setObjectName("camera")
         self.cameraBoxLayout.addWidget(self.camera)
@@ -82,6 +84,7 @@ class ExtendedQGroupBox(QtWidgets.QGroupBox):
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
             self.clicked.emit()
+    
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -473,6 +476,39 @@ class Ui_MainWindow(object):
         self.ipValue.setText(str(widget.camera_ip))
         self.tagValue.setText(str(widget.camera_tag))
 
+        if widget.currentQtFrame is None:
+            self.statusValue.setText('')
+            self.humanValue.setText('')
+            self.unsafeHumanValue.setText('')
+            self.safeHumanValue.setText('')
+            self.activityValue.setText('')
+        else:
+            if widget.status is None:
+                self.statusValue.setText('SAFE')
+                palette = self.setWidgetTextColor(self.green)
+                self.statusValue.setPalette(palette)
+                self.activityValue.setText('Safe Conditions are currently prevailing.')
+                palette = self.setWidgetTextColor(self.blue)
+                self.activityValue.setPalette(palette)
+            else:
+                if widget.status == False:
+                    self.statusValue.setText('SAFE')
+                    palette = self.setWidgetTextColor(self.green)
+                    self.statusValue.setPalette(palette)
+                    self.activityValue.setText('Safe Conditions for past 1 hour')
+                    self.activityValue.setPalette(palette)
+                elif widget.status == True:
+                    self.statusValue.setText('UNSAFE')
+                    palette = self.setWidgetTextColor(self.red)
+                    self.statusValue.setPalette(palette)
+                    self.activityValue.setText('Unsafe Conditions are currently prevailing.')
+                    self.activityValue.setPalette(palette)
+            self.humanValue.setText(str(widget.humans))
+            self.unsafeHumanValue.setText(str(widget.unsafeHumans))
+            self.safeHumanValue.setText(str(widget.safeHumans))
+            
+
+
     def scrollAreaClick(self, index):
         numberOfWidgets = self.formLayout.count()
         self.selectedIndex = index
@@ -490,9 +526,24 @@ class Ui_MainWindow(object):
             widget.camera.setLineWidth(1)
             widget.cameraBoxTag.setLineWidth(1)
             widget.camera.setEnabled(True)
-            widget.cameraBoxTag.setEnabled(True)
-            
+            widget.cameraBoxTag.setEnabled(True)        
        
+    def updateCamera(self, index, frame=None, humans = 0, unsafeHumans = 0, safeHumans = 0, status = None ):
+        widget = self.getCameraWidget(index)
+        if frame is None:
+            widget.currentQtFrame = None
+            widget.camera.setPixmap(QtGui.QPixmap(widget.defaultFrame))
+            widget.humans = 0
+            widget.unsafeHumans = 0
+            widget.safeHumans = 0
+            widget.status = None
+        else:
+            widget.currentQtFrame = ConvertFrametoQtFrame(frame)
+            self.setLabeltoFrame(widget.currentQtFrame, widget.camera)
+            widget.humans = humans
+            widget.unsafeHumans = unsafeHumans
+            widget.safeHumans = safeHumans
+            widget.status = status
 
     def addCamera(self, index, ip, tag = None):
         newCamera = ExtendedQGroupBox(index, ip)
@@ -521,7 +572,10 @@ class Ui_MainWindow(object):
         return widget
 
     def setLabeltoFrame(self, frame, widget):
-        widget.setPixmap(QtGui.QPixmap.fromImage(frame))
+        if frame is not None:
+            widget.setPixmap(QtGui.QPixmap.fromImage(frame))
+        else:
+            widget.setPixmap(QtGui.QPixmap('default.jpg'))
         #widget.camera.setScaledContents(True)
 
 

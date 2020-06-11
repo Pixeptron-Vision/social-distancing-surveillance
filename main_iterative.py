@@ -68,6 +68,14 @@ class VisionSurveillance:
             # persion_1_id = pairs[0] - a nx1 array
             # persion_2_id = pairs[1] - a nx1 array
 
+            # Safety Message Service Variables
+            #safety_ok = True
+            #unsafety_status_msg = None
+            #unsafe_timer = None
+            #safe_timer = None
+            #unsafety_threshold_time = int(dt.timedelta(hours=1))
+            #safety_threshold_time = int(dt.timedelta(hours=1))
+
             # Code for Anamaly Detection and Alert System
             # if (Anamaly Detection Condition) == True:
             #    safety_ok = False
@@ -162,15 +170,15 @@ if __name__ == '__main__':
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
-    for index,i in enumerate(sources):
-        det = VisionSurveillance(odapi,src=i)
+    for index, ip in enumerate(sources):
+        det = VisionSurveillance(odapi,src=ip)
         stream_objects.append(det)
-        ui.addCamera(index, i)
+        ui.addCamera(index, ip)
 
     #Note: index is passed in start function as indexing is important
     #       at the time of frame display...as windows are named with index
     #       to avoid mixing and overriding of frames during display.
-    for index,obj in enumerate(stream_objects):
+    for index, obj in enumerate(stream_objects):
         obj.start(index)
     # breaker is used to read exit command from users
     breaker = False
@@ -182,11 +190,16 @@ if __name__ == '__main__':
         for i, det in enumerate(stream_objects):
             user_exit, current_frame = det.detection()
             #frame = cv2.resize(current_frame, (640, 480))
-            frame = ConvertFrametoQtFrame(current_frame)
-            ui.setLabeltoFrame(frame, ui.getCameraWidget(i).camera)
+            ui.updateCamera(i, current_frame)
             if i == ui.selectedIndex:
-                ui.setLabeltoFrame(frame, ui.mainDisplay)
+                ui.setLabeltoFrame(ui.getCameraWidget(i).currentQtFrame, ui.mainDisplay)
                 ui.setDescription(i)
+                ui.getCameraWidget(i).setChecked(True)
+                ui.getCameraWidget(i).camera.setLineWidth(5)
+                ui.getCameraWidget(i).cameraBoxTag.setLineWidth(5)
+                ui.getCameraWidget(i).camera.setEnabled(True)
+                ui.getCameraWidget(i).cameraBoxTag.setEnabled(True)
+
             if user_exit:
                 breaker=True
                 sys.exit(0)
