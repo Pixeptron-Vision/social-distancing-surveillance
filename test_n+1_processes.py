@@ -1,4 +1,3 @@
-
 import numpy as np
 import argparse
 import cv2
@@ -8,12 +7,10 @@ import datetime as dt
 import time
 from threading import Thread
 # VideoCaptureAsync implements separate thread for reading stream from camera
-from visionObjects.videocaptureasync import VideoCaptureAsync
-from visionObjects.frameDisplay import FrameDisplay
-from visionObjects.distanceCalc import calculate_dist
-
-from human_detector import DetectorAPI
-from human_detector import centre_calcualtion
+from utils.videocaptureasync import VideoCaptureAsync
+from utils.frameDisplay import FrameDisplay
+from utils.distanceCalc import calculate_dist
+from utils.DL_model import DetectorAPI,centre_calcualtion
 
 import multiprocessing
 from multiprocessing import shared_memory , Queue

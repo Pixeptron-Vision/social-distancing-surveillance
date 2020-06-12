@@ -1,7 +1,6 @@
 import numpy as np
 import argparse
 import cv2
-import imutils
 import sys
 from scipy.spatial import distance
 import datetime as dt
@@ -9,12 +8,10 @@ import time
 from threading import Thread
 from multiprocessing import Process
 # VideoCaptureAsync implements separate thread for reading stream from camera
-from visionObjects.videocaptureasync import VideoCaptureAsync
-from visionObjects.frameDisplay import FrameDisplay
-from visionObjects.distanceCalc import calculate_dist
-
-from human_detector import DetectorAPI
-from human_detector import centre_calcualtion
+from utils.videocaptureasync import VideoCaptureAsync
+from utils.frameDisplay import FrameDisplay
+from utils.distanceCalc import calculate_dist
+from utils.DL_model import DetectorAPI,centre_calcualtion
 
 model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
 detection_confidence = 0.4
@@ -58,8 +55,12 @@ class VisionSurveillance:
             current_frame = cv2.resize(current_frame, (300, 300))
 
             boxes, scores, classes, num = self.odapi.processFrame(current_frame)
-
-            centres,current_frame =centre_calcualtion(boxes,scores,classes,current_frame,detection_confidence)
+            # print(len(boxes))
+            # print(len(scores))
+            # print(len(classes))
+            # print(num)
+            # print('\n\n')
+            centres,current_frame =centre_calcualtion(boxes,scores,classes,num,current_frame,detection_confidence)
 
             # Returns id of pairs violating the norms
             pairs = calculate_dist(
@@ -131,10 +132,14 @@ if __name__ == '__main__':
     # cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
 
 
-    sources = ['../PNNLParkingLot2.avi',
-                '../walking.avi',
-                '../vid_short.mp4',
-                '../PNNL_Parking_LOT(1).avi']
+    sources = ['../../PNNLParkingLot2.avi',
+                '../../vid_short.mp4',
+                '../../PNNL_Parking_LOT(1).avi',
+                '../../PNNLParkingLot2.avi',
+                # '../../vid_short.mp4',
+                # '../../PNNL_Parking_LOT(1).avi',
+                '../../PNNLParkingLot2.avi',
+                '../../vid_short.mp4']
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
@@ -149,9 +154,10 @@ if __name__ == '__main__':
         obj.start(index)
     # breaker is used to read exit command from users
     breaker = False
-
+    i=0
     # while loop to run for each frame for all cameras for unlimited time
-    while True:
+    # while i<2 :
+    while True :
 
         for det in stream_objects:
             user_exit = det.detection()
@@ -159,5 +165,5 @@ if __name__ == '__main__':
                 breaker=True
                 sys.exit(0)
                 # break
-
+        i+=1
     sys.exit(0)
