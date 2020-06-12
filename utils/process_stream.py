@@ -18,7 +18,7 @@ import multiprocessing
 from multiprocessing import shared_memory , Queue
 detection_confidence = 0.4
 # N=4
-
+shape = (800,800)
 class VisionSurveillance:
     def __init__(self,queue,src=0):
         self.src = src;
@@ -26,22 +26,24 @@ class VisionSurveillance:
         self.queue=queue
 
     def start(self,index_count):
-        self.display_obj = FrameDisplay().start()
-        self.display_obj.index=index_count
+        # self.display_obj = FrameDisplay().start()
+        # self.display_obj.index=index_count
+        self.index=index_count
         self.cap = VideoCaptureAsync(src=self.src).start()
         # self.backUpdate_obj = background()
         return self
 
     # This function is for detection for each frame
-    def detection(self,images,boxes,scores,classes,num):
-        index_count=self.display_obj.index
+    def detection(self,images,boxes,scores,classes,num,display):
+        index_count=self.index
         ret, current_frame = self.cap.read()
         if not ret or current_frame is None:
             # print("[INFO] Cam IP Stream unavailable...")
-            user_exit = self.display_obj.display_error()
+            # user_exit = self.display_obj.display_error()
+            display[index_count]=None
 
         else:
-            current_frame = cv2.resize(current_frame, (300, 300))
+            current_frame = cv2.resize(current_frame, (800,800))
             images[index_count] = current_frame.copy()
             self.queue.put(index_count)
             # print(images[index_count])
@@ -52,9 +54,9 @@ class VisionSurveillance:
 
             pairs = calculate_dist(current_frame, centres, self.threshold_dist)
             # print(pairs)
-            user_exit = self.display_obj.update(current_frame)
+            # user_exit = self.display_obj.update(current_frame)
+            display[index_count]=current_frame
 
-        return user_exit
 
 
     def __exit__(self):
@@ -64,7 +66,10 @@ class VisionSurveillance:
 
 def spawn_process(sources,start_index,queue,N):
     existing_container = shared_memory.SharedMemory(name='image_container')
-    images = np.ndarray((N,300,300,3), dtype=np.float32, buffer=existing_container.buf)
+    images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=existing_container.buf)
+
+    display_shared = shared_memory.SharedMemory(name='display_container')
+    display = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=display_shared.buf)
 
     boxes_shared = shared_memory.SharedMemory(name='boxes_container')
     boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
@@ -95,7 +100,7 @@ def spawn_process(sources,start_index,queue,N):
     breaker=False
     while True :
         for det in stream_objects:
-            user_exit = det.detection(images,boxes,scores,classes,num)
+            user_exit = det.detection(images,boxes,scores,classes,num,display)
             if user_exit:
                 breaker=True
         if breaker:
