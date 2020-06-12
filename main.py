@@ -1,138 +1,139 @@
+
 import numpy as np
 import argparse
 import cv2
-import imutils
 import sys
 from scipy.spatial import distance
 import datetime as dt
 import time
 from threading import Thread
 # VideoCaptureAsync implements separate thread for reading stream from camera
-from visionObjects.videocaptureasync import VideoCaptureAsync
-from visionObjects.frameDisplay import FrameDisplay
-from visionObjects.distanceCalc import calculate_dist
+from utils.videocaptureasync import VideoCaptureAsync
+from utils.frameDisplay import FrameDisplay
+from utils.distanceCalc import calculate_dist
+from utils.DL_model import DetectorAPI,centre_calcualtion
+from utils.process_stream import VisionSurveillance , spawn_process
+import multiprocessing
 
-from human_detector import DetectorAPI
-from human_detector import centre_calcualtion
+from multiprocessing import shared_memory , Queue
 
-# The below function is responsible for implementing the Detecting the motion.
-timeDuration = dt.timedelta(seconds=20)
-desired_time_frame = int(timeDuration.seconds)
-threshold_dist = 75
-# For background frame, intialising a background_frames dictionary
-motion_status = False
-mean_background_frame = None
+import ctypes
 
-
-
-def detectMotion(cap):
-
-    # Safety Message Service Variables
-    safety_ok = True
-    unsafety_status_msg = None
-    unsafe_timer = None
-    safe_timer = None
-    # unsafety_threshold_time = int(dt.timedelta(hours=1))
-    # safety_threshold_time = int(dt.timedelta(hours=1))
-    fid=0
-    while True:
-        # Read second and subsequent frames
-
-        ret, current_frame = cap.read()
-        if not ret or current_frame is None:
-            # print("[INFO] Cam IP Stream unavailable...")
-            user_exit = display_obj.display_error()
-
-        else:
-            # print("fid - ", fid)
-            motion_status = False
-            # Resizing the frame
-
-            current_frame = cv2.resize(current_frame, (640, 480))
-            # current_frame = cv2.resize(current_frame, (1280, 720))
-
-            boxes, scores, classes, num = odapi.processFrame(current_frame)
-
-            centres,boxed_current_frame=centre_calcualtion(boxes,scores,classes,current_frame,prediction_confidence)
-            # Returns id of pairs violating the norms
-            pairs = calculate_dist(boxed_current_frame, centres, threshold_dist)
-            # Note: pairs has id index of contour center in centres list
-            # persion_1_id = pairs[0] - a nx1 array
-            # persion_2_id = pairs[1] - a nx1 array
-
-            # Code for Anamaly Detection and Alert System
-            # if (Anamaly Detection Condition) == True:
-            #    safety_ok = False
-            #    if unsafe_timer is None:
-            #        unsafe_timer = time.time()
-            #        safe_timer = None
-            # else:
-            #    safety_ok = True
-            #    if safe_timer is None:
-            #        safe_timer = time.time()
-            #        unsafe_timer = None
-
-            # if safety_ok == False:
-            #    unsafety_status_msg = True
-            # else:
-            #    if safe_timer - time.time() >= safety_threshold_time:
-            #        unsafety_status_msg = False
-            #        safe_timer = time.time() #Timer is reset to recalculate after every threshold time
-            #    else:
-            #        unsafety_status_msg = None
-
-            '''
-            Value representation of unsafety_status_msg:
-            1.If unsafety_status_msg == NONE
-                This represents that the variable is reset.
-                There is no unsafe condition occuring.
-                Safe condition is occuring but less than threshold amount of time
-            2.If unsafety_status_msg == False
-                This represents that Safe condition has occured for Threshold amount of time
-            3.If unsafety_status_msg == True
-                This represents that Unsafe conditions are occuring right now.
-            '''
-            # if unsafety_status_msg is not None:
-            #    if unsafety_status_msg == True:
-            #        # Alert Unsafe Right Now
-            #    else:
-            #        # Alert Safe for one hour (Threshold time)
-
-            # Disaply the frames and read is user presses q/exit
-            user_exit = display_obj.update(boxed_current_frame)
-
-            fid += 1
-        if user_exit == True:
-            cap.stop()
-            display_obj.stop()
-            sys.exit(0)
-
-    cap.stop()
-    display_obj.stop()
-    sys.exit(0)
-
-
-# Intializing and starting the UI thread object
-display_obj = FrameDisplay().start()
-# model_path = '/path/to/faster_rcnn_inception_v2_coco_2017_11_08/frozen_inference_graph.pb'
 model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
-odapi = DetectorAPI(path_to_ckpt=model_path)
-prediction_confidence = 0.4
+detection_confidence = 0.4
 
+class DetectionProcess():
+    def __init__(self):
+        self.isStarted=True
 
+    def start(self,queue,N):
+        self.p=multiprocessing.Process(target=self.detector,args=(queue,N))
+        self.p.start()
+        return self
 
-# cap = cv2.VideoCapture('http://service:Tata!123@192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=60779') #service:TATA!@123;service:Pass!234; 48.51           ;rtsp:/service:TATA!@123@192.168.48.51
-# rtsp://192.168.48.51//rtsp_tunnel , rtsp:/service:TATA!@123@192.168.48.51
-# print("Reading first frame...") #http://192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=37660
-# ret, image = cap.read() #http://192.168.51.77/video.mp4?line=1&inst=1&rec=0&rnd=60779
+    def detector(self,queue,N):
+        odapi = DetectorAPI(model_path)
+        existing_container = shared_memory.SharedMemory(name='image_container')
+        images = np.ndarray((N,300,300,3), dtype=np.float32, buffer=existing_container.buf)
+        # #
+        boxes_shared = shared_memory.SharedMemory(name='boxes_container')
+        boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
 
-# Note: VideoCaptureAsync implemented here has same format as VideoCapture....just specify the link of ip cam as:
-# cap = VideoCaptureAsync(src="videofile_name / Ip camera link")
-cap = VideoCaptureAsync(src='../vid_short.mp4')
-# cap = VideoCaptureAsync(src=0)
-# This is responsible for starting up the thread and frame capturing process
-cap.start()
-while True:
-    detectMotion(cap)
+        scores_shared = shared_memory.SharedMemory(name='scores_container')
+        scores = np.ndarray((N,100),dtype=np.float32, buffer=scores_shared.buf)
 
-# cv2.destroyAllWindows()
+        classes_shared = shared_memory.SharedMemory(name='classes_container')
+        classes = np.ndarray((N,100),dtype=np.float32, buffer=classes_shared.buf)
+
+        num_shared = shared_memory.SharedMemory(name='num_container')
+        num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
+        # count =0
+        print('Detection start')
+        while self.isStarted :
+            if not queue.empty():
+                index = queue.get()
+                # if index=='Die':
+                #     print('Die')
+                #     break
+                # else:
+                img = images[index]
+                boxes[index], scores[index], classes[index], num[index] = odapi.processFrame(img)
+        print('Detection closed')
+        existing_container.close()
+        boxes_shared.close()
+        scores_shared.close()
+        classes_shared.close()
+        num_shared.close()
+        sys.exit(0)
+
+if __name__ == '__main__':
+    M = 4
+
+    sources = ['../../PNNLParkingLot2.avi',
+                '../../PNNL_Parking_LOT(1).avi',
+                '../../PNNLParkingLot2.avi',
+                '../../vid_short.mp4',
+                '../../PNNL_Parking_LOT(1).avi',
+                '../../PNNLParkingLot2.avi',
+                '../../vid_short.mp4']
+    N = len(sources)
+    # N=4
+    src_images = np.zeros((N,300,300,3),dtype=np.float32)
+    boxes = np.zeros((N,100,4),dtype=np.float32)
+    scores=np.zeros((N,100),dtype=np.float32)
+    classes=np.zeros((N,100),dtype=np.float32)
+    num = np.zeros((N),dtype=np.int)
+
+    img_shared = shared_memory.SharedMemory(create=True,size=src_images.nbytes,name='image_container')
+    images = np.ndarray((N,300,300,3), dtype=np.float32, buffer=img_shared.buf)
+    #
+    boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
+    boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
+
+    scores_shared = shared_memory.SharedMemory(create=True,size=scores.nbytes,name='scores_container')
+    scores = np.ndarray((N,100),dtype=np.float32, buffer=scores_shared.buf)
+
+    classes_shared = shared_memory.SharedMemory(create=True,size=classes.nbytes,name='classes_container')
+    classes = np.ndarray((N,100),dtype=np.float32, buffer=classes_shared.buf)
+
+    num_shared = shared_memory.SharedMemory(create=True,size=num.nbytes,name='num_container')
+    num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
+
+    queue = Queue()
+
+    p = DetectionProcess().start(queue,N)
+    # sources = np.array(sources)
+    i=0
+    jobs = []
+    while i<len(sources):
+        # print(i)
+        if (i+M)<=len(sources):
+            process = multiprocessing.Process(target=spawn_process,
+                            args=(sources[i:i+M],i,queue,N))
+        else:
+            process = multiprocessing.Process(target=spawn_process,
+                            args=(sources[i:],i,queue,N))
+
+        process.start()
+        jobs.append(process)
+        i+=M
+
+    print('Process Appending Complete')
+    for i in jobs:
+        i.join()
+    # process = multiprocessing.Process(target=spawn_process,
+    #                      args=(sources,0,queue,N))
+    # process.start()
+    # for i in jobs:
+    #     i.terminate()
+    #     i.join()
+    # print('All process closed')
+    p.isStarted = False
+    # p.p.terminate()
+    p.p.join()
+    img_shared.unlink()
+    boxes_shared.unlink()
+    scores_shared.unlink()
+    classes_shared.unlink()
+    num_shared.unlink()
+    sys.exit(0)
