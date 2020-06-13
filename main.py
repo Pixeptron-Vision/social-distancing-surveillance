@@ -47,6 +47,7 @@ class DetectionProcess():
 
         num_shared = shared_memory.SharedMemory(name='num_container')
         num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
+
         # count =0
         print('Detection start')
         while self.isStarted :
@@ -75,14 +76,15 @@ def terminate_processes(jobs,p):
     p.p.terminate()
     p.p.join()
 
-def ui_thread(ui,display):
+def ui_thread(ui,display,frame_data):
     N = ui.formLayout.count()
     while True:
         for i in range(N):
             cf = display[i]
             cf = np.round(cf)
             cf = np.uint8(cf)
-            ui.updateCamera(i, cf)
+            # ui.updateCamera(i, cf)
+            ui.updateCamera(i, cf,frame_data[i][0],frame_data[i][1])
             # print('Updated')
             if i == ui.selectedIndex:
                 ui.setLabeltoFrame(ui.getCameraWidget(i).currentQtFrame, ui.mainDisplay)
@@ -94,16 +96,18 @@ def ui_thread(ui,display):
                 ui.getCameraWidget(i).cameraBoxTag.setEnabled(True)
             # print('Rog')
         cv2.waitKey(1)
+        # if not app.exec_():
+        #     return 0
 
 if __name__ == '__main__':
-    M = 3
+    M = 4
 
     sources = ['../../PNNLParkingLot2.avi',
-                # '../../PNNL_Parking_LOT(1).avi',
-                # '../../PNNLParkingLot2.avi',
-                # '../../vid_short.mp4',
-                # '../../PNNL_Parking_LOT(1).avi',
-                # '../../PNNLParkingLot2.avi',
+                '../../PNNL_Parking_LOT(1).avi',
+                '../../PNNLParkingLot2.avi',
+                '../../vid_short.mp4',
+                '../../PNNL_Parking_LOT(1).avi',
+                '../../PNNLParkingLot2.avi',
                 '../../vid_short.mp4']
     N = len(sources)
 
@@ -118,16 +122,20 @@ if __name__ == '__main__':
         ui.addCamera(index, ip)
 
     # N=4
-    src_images = np.zeros((N,shape[0],shape[1],3),dtype=np.float32)
+    images = np.zeros((N,shape[0],shape[1],3),dtype=np.float32)
     boxes = np.zeros((N,100,4),dtype=np.float32)
     scores=np.zeros((N,100),dtype=np.float32)
     classes=np.zeros((N,100),dtype=np.float32)
     num = np.zeros((N),dtype=np.int)
+    frame_data = np.zeros((N,4),dtype=np.int)
 
-    img_shared = shared_memory.SharedMemory(create=True,size=src_images.nbytes,name='image_container')
+    frame_data_memory = shared_memory.SharedMemory(create=True,size=frame_data.nbytes,name='frame_data_container')
+    frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
+
+    img_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='image_container')
     images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=img_shared.buf)
 
-    display_shared = shared_memory.SharedMemory(create=True,size=src_images.nbytes,name='display_container')
+    display_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='display_container')
     display = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=display_shared.buf)
     #
     boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
@@ -167,10 +175,9 @@ if __name__ == '__main__':
     # thread = Thread(target=ui_thread,name='ui_thread',args=(ui,display))
     # thread.daemon = True
     # thread.start()
-    ui_thread(ui,display)
+    ui_thread(ui,display,frame_data)
 
-    time.sleep(70)
-    print('Sleep Over')
+    print('Termination Start')
     terminate_processes(jobs,p)
     img_shared.unlink()
     boxes_shared.unlink()

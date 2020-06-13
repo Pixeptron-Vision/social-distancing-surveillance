@@ -34,7 +34,7 @@ class VisionSurveillance:
         return self
 
     # This function is for detection for each frame
-    def detection(self,images,boxes,scores,classes,num,display):
+    def detection(self,images,boxes,scores,classes,num,display,frame_data):
         index_count=self.index
         ret, current_frame = self.cap.read()
         if not ret or current_frame is None:
@@ -56,6 +56,15 @@ class VisionSurveillance:
             # print(pairs)
             # user_exit = self.display_obj.update(current_frame)
             display[index_count]=current_frame
+            if centres is None:
+                frame_data[index_count][0]=0
+            else:
+                frame_data[index_count][0]=len(centres)
+
+            if pairs is None:
+                frame_data[index_count][1]=0
+            else:
+                frame_data[index_count][1]=len(pairs)
 
 
 
@@ -83,6 +92,10 @@ def spawn_process(sources,start_index,queue,N):
     num_shared = shared_memory.SharedMemory(name='num_container')
     num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
 
+
+    frame_data_memory = shared_memory.SharedMemory(name='frame_data_container')
+    frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
+
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
@@ -100,7 +113,7 @@ def spawn_process(sources,start_index,queue,N):
     breaker=False
     while True :
         for det in stream_objects:
-            user_exit = det.detection(images,boxes,scores,classes,num,display)
+            user_exit = det.detection(images,boxes,scores,classes,num,display,frame_data)
             if user_exit:
                 breaker=True
         if breaker:
