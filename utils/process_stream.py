@@ -66,6 +66,9 @@ class VisionSurveillance:
             else:
                 frame_data[index_count][1]=len(pairs)
 
+            frame_data[index_count][2] = frame_data[index_count][0]-frame_data[index_count][1]
+            frame_data[index_count][3] = bool(frame_data[index_count][1])
+
 
 
     def __exit__(self):

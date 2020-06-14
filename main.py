@@ -19,47 +19,76 @@ from multiprocessing import shared_memory , Queue
 from ui_trial import *
 import ctypes
 
+# The below model_path contains the link to frozen graph of pretrained tensorflow object detection model.
 model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
+# Probability of detected box to be human
 detection_confidence = 0.4
+# A standard shape has been fixed for all images
 shape = (800,800)
-class DetectionProcess():
+
+# Human Detector class is responsible of initiating the object detection model
+# Here the detection task is designed to run on a separate process.
+class HumanDetector():
     def __init__(self):
         self.isStarted=True
 
+    # Start function spawn the process for detection tasks and executes detector function.
     def start(self,queue,N):
+        # Spawn the process and store the refernece in p
         self.p=multiprocessing.Process(target=self.detector,args=(queue,N))
         self.p.start()
         return self
 
+    # Detector function does the detection on each image from all cams.
+    # It uses a queue to receive and process the request from different cameras in a First Come First Serve basis.
+    # It fetches the images of coreesponding cam from shared memory and does detection task.
+    # The results of detection are the stored in a separate sahred memory container.
     def detector(self,queue,N):
+        # DetectorAPI is the tensorflow Object Detection API which loads the model and performs detection
+        # with help of image tensors and saved model tensors
         odapi = DetectorAPI(model_path)
-        existing_container = shared_memory.SharedMemory(name='image_container')
-        images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=existing_container.buf)
-        # #
+
+        # Below the different shared memory are connected and assigned to specific numpy arrays as needed
+
+        # The image conatiner conatins the images of all N cameras in a numpy aaray format.
+        # The shape of image is fixed beforehand declared as global variable on start of this script as 'shape'
+        image_container = shared_memory.SharedMemory(name='image_container')
+        # Reshape the connected memory in desired numpy aaray and assign to local variable image
+        images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=image_container.buf)
+
+        # Boxes shared stores the vertices of the rectangular boxes of all cameras given by the detectorAPI
         boxes_shared = shared_memory.SharedMemory(name='boxes_container')
         boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
 
+        # Scores stores the probability of each predicted boxes
         scores_shared = shared_memory.SharedMemory(name='scores_container')
         scores = np.ndarray((N,100),dtype=np.float32, buffer=scores_shared.buf)
 
+        # Classes stores the class index of boxes predicted by the detector
+        # Note: The detector currently being used does multiclass detection
         classes_shared = shared_memory.SharedMemory(name='classes_container')
         classes = np.ndarray((N,100),dtype=np.float32, buffer=classes_shared.buf)
 
+        # num stores the total number of objects detected in a frame.
         num_shared = shared_memory.SharedMemory(name='num_container')
         num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
 
-        # count =0
-        print('Detection start')
+        # Start the while loop till user exits it and performs the detection.
+        # The index of cameras who has requested for detection is fetched from queue
+        # The request are adhered in First Come First Serve basis
+        # print('Detection start')
         while self.isStarted :
             if not queue.empty():
+                # get index or Cam ID of cam with first request from queue
                 index = queue.get()
-                # if index=='Die':
-                #     print('Die')
-                #     break
-                # else:
+                # Fetch most recent image of indexed camera from the shared memory
                 img = images[index]
+                # processFrame does the detection on image feeded to it
+                # Store the results like boxes , scores , classes,num of the respective frame in the
+                # shared memory with the cam id as index
                 boxes[index], scores[index], classes[index], num[index] = odapi.processFrame(img)
-        print('Detection closed')
+        # print('Detection closed')
+        # After exit of while loop disconnect all shared memory.
         existing_container.close()
         boxes_shared.close()
         scores_shared.close()
@@ -67,25 +96,31 @@ class DetectionProcess():
         num_shared.close()
         sys.exit(0)
 
+# T=terminate Process is responsible for killing all the processes initiated by this programe for different cameras
+def terminate_processes(jobs,detector_process):
 
-def terminate_processes(jobs,p):
-    for i in jobs:
-        i.terminate()
-        i.join()
-    p.isStarted = False
-    p.p.terminate()
-    p.p.join()
+    for process in jobs:
+        process.terminate()
+        process.join()
 
+    # close the detector process i.e. HumanDetection class
+    detector_process.isStarted = False
+    detector_process.p.terminate()
+    detector_process.p.join()
+
+# ui_thread keeps updating the frames in the UI by fetching it from the shared container
 def ui_thread(ui,display,frame_data):
     N = ui.formLayout.count()
     while True:
         for i in range(N):
+            # cf = current _frame : extract current frame from sahred memory
             cf = display[i]
             cf = np.round(cf)
             cf = np.uint8(cf)
-            # ui.updateCamera(i, cf)
-            ui.updateCamera(i, cf,frame_data[i][0],frame_data[i][1])
-            # print('Updated')
+            # update the frame in respective window in UI
+            ui.updateCamera(i, cf,frame_data[i][0],frame_data[i][1],frame_data[i][2],frame_data[i][3])
+
+            # selectedIndex show the index of camera which is in focus in Main Window
             if i == ui.selectedIndex:
                 ui.setLabeltoFrame(ui.getCameraWidget(i).currentQtFrame, ui.mainDisplay)
                 ui.setDescription(i)
@@ -94,12 +129,13 @@ def ui_thread(ui,display,frame_data):
                 ui.getCameraWidget(i).cameraBoxTag.setLineWidth(5)
                 ui.getCameraWidget(i).camera.setEnabled(True)
                 ui.getCameraWidget(i).cameraBoxTag.setEnabled(True)
-            # print('Rog')
+
         cv2.waitKey(1)
         # if not app.exec_():
         #     return 0
 
 if __name__ == '__main__':
+    # M show the max number of cam we are willing to run in one process
     M = 4
 
     sources = ['../../PNNLParkingLot2.avi',
@@ -109,19 +145,25 @@ if __name__ == '__main__':
                 '../../PNNL_Parking_LOT(1).avi',
                 '../../PNNLParkingLot2.avi',
                 '../../vid_short.mp4']
+
+    # N = total number of streams to process
     N = len(sources)
 
+    # Start and display the main Window
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    # time.sleep(20)
 
+    # Append the different cameras and their sources in the UI
     for index, ip in enumerate(sources):
         ui.addCamera(index, ip)
 
-    # N=4
+    # The below commands initiate some memories in the volatile spaces ehich can be shared and accesses from
+    # all the different processes
+
+    # First we make some standard variable which will decide the size of shared.
     images = np.zeros((N,shape[0],shape[1],3),dtype=np.float32)
     boxes = np.zeros((N,100,4),dtype=np.float32)
     scores=np.zeros((N,100),dtype=np.float32)
@@ -129,15 +171,19 @@ if __name__ == '__main__':
     num = np.zeros((N),dtype=np.int)
     frame_data = np.zeros((N,4),dtype=np.int)
 
+    # Frame data will store all the data and parameters like no. of humans , no. of safe and unsafe humans
+    # of processed frame in the shared memory which can be accessed by the UI
     frame_data_memory = shared_memory.SharedMemory(create=True,size=frame_data.nbytes,name='frame_data_container')
     frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
 
+    # The image conatiner conatins the images of all N cameras in a numpy aaray format.
+    # The shape of image is fixed beforehand declared as global variable on start of this script as 'shape'
     img_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='image_container')
     images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=img_shared.buf)
 
     display_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='display_container')
     display = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=display_shared.buf)
-    #
+
     boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
     boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
 
@@ -152,9 +198,9 @@ if __name__ == '__main__':
 
     queue = Queue()
 
-    p = DetectionProcess().start(queue,N)
-    # time.sleep(60)
-    # sources = np.array(sources)
+    detector_process = HumanDetector().start(queue,N)
+
+
     i=0
     jobs = []
     while i<len(sources):
@@ -178,7 +224,9 @@ if __name__ == '__main__':
     ui_thread(ui,display,frame_data)
 
     print('Termination Start')
+    # Termiante all the spawned child processes
     terminate_processes(jobs,p)
+    # Erase all the reserved memory 
     img_shared.unlink()
     boxes_shared.unlink()
     scores_shared.unlink()
