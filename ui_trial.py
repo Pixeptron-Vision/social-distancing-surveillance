@@ -8,13 +8,14 @@
 
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
+from menuBarOptions import *
 
 class ExtendedQGroupBox(QtWidgets.QGroupBox):
     defaultFrame = "stream_error.jpg"
     currentQtFrame = None
     camera_id = None
     camera_ip = ''
-    camera_tag = None
+    camera_tag = ''
     humans = 0
     unsafeHumans = 0
     safeHumans = 0
@@ -403,25 +404,30 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        self.actionAdd_Camera = QtWidgets.QAction(MainWindow)
-        self.actionAdd_Camera.setObjectName("actionAdd_Camera")
-        self.actionEdit_Camera = QtWidgets.QAction(MainWindow)
-        self.actionEdit_Camera.setObjectName("actionEdit_Camera")
+        self.actionNew = QtWidgets.QAction(MainWindow)
+        self.actionNew.setObjectName("actionNew")
+        self.actionEdit = QtWidgets.QAction(MainWindow)
+        self.actionEdit.setObjectName("actionEdit")
+        self.actionRemove = QtWidgets.QAction(MainWindow)
+        self.actionRemove.setObjectName("actionRemove")
         self.actionRestart = QtWidgets.QAction(MainWindow)
         self.actionRestart.setObjectName("actionRestart")
-        self.actionRemove_Camera = QtWidgets.QAction(MainWindow)
-        self.actionRemove_Camera.setObjectName("actionRemove_Camera")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
         self.menuFile.addAction(self.actionRestart)
-        self.menuFile.addAction(self.actionAdd_Camera)
-        self.menuFile.addAction(self.actionEdit_Camera)
-        self.menuFile.addAction(self.actionRemove_Camera)
+        self.menuFile.addAction(self.actionNew)
+        self.menuFile.addAction(self.actionEdit)
+        self.menuFile.addAction(self.actionRemove)
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    #Menu Bar Triggers
+        self.actionNew.triggered.connect(lambda: self.newClicked(self.formLayout))
+        self.actionEdit.triggered.connect(lambda: self.editClicked(self.formLayout))
+        self.actionRemove.triggered.connect(lambda: self.removeClicked(self.formLayout))
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -441,12 +447,54 @@ class Ui_MainWindow(object):
         self.safeHumanLabel.setText(_translate("MainWindow", "NO. OF SAFE HUMANS:"))
         self.unsafeHumanLabel.setText(_translate("MainWindow", "NO. OF UNSAFE HUMANS:"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
-        self.actionAdd_Camera.setText(_translate("MainWindow", "New Camera"))
-        self.actionEdit_Camera.setText(_translate("MainWindow", "Edit Camera"))
         self.actionRestart.setText(_translate("MainWindow", "Restart"))
-        self.actionRemove_Camera.setText(_translate("MainWindow", "Remove Camera"))
+        self.actionNew.setText(_translate("MainWindow", "New Camera"))
+        self.actionEdit.setText(_translate("MainWindow", "Edit Camera"))
+        self.actionRemove.setText(_translate("MainWindow", "Remove Camera"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
 
+    #For Menubar: File->New Camera
+    def newClicked(self, layout = None):
+        Dialog = QtWidgets.QDialog()
+        ui = NewDialog()
+        ui.setupUi(Dialog, layout)
+        Dialog.show()
+        Dialog.exec_()
+        if ui.makeCamBool:
+            self.addCamera(index = int(ui.idValue.text()), ip = ui.ipValue.text(), tag = ui.tagValue.text())
+        else:
+            print("Cancelled New Camera")
+    
+    #For Menubar: File->Edit Camera
+    def editClicked(self, layout = None):
+        Dialog = QtWidgets.QDialog()
+        ui = EditDialog()
+        ui.setupUi(Dialog, layout)
+        Dialog.show()
+        Dialog.exec_()
+        if ui.editCamBool:
+            widget = self.getCameraWidget(int(ui.idValues.currentIndex()))
+            widget.camera_tag = str(ui.tagValue.text())
+            widget.cameraBoxTag.setText(str(ui.tagValue.text()))
+            widget.camera_ip = str(ui.ipValue.text())
+        else:
+            print("CANCEL")
+
+    #For Menubar: File->Remove Camera
+    def removeClicked(self, layout = None):
+        Dialog = QtWidgets.QDialog()
+        ui = RemoveDialog()
+        ui.setupUi(Dialog, layout)
+        Dialog.show()
+        Dialog.exec_()
+        if ui.removeCamBool:
+            widget = self.getCameraWidget(int(ui.idValues.currentIndex()))
+            widget.setParent(None)
+        else:
+            print("CANCEL")
+
+
+    # FOR DESCRIPTION
     def setWidgetTextColor(self, color):
         palette = QtGui.QPalette()
         colorValue = self.getColorValue(color)
@@ -461,6 +509,7 @@ class Ui_MainWindow(object):
         palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, brush)
         return palette
 
+    # FOR DESCRIPTION
     def getColorValue(self, color):
         if color == self.blue:
             colorValue = QtGui.QColor(0, 0, color)
@@ -470,6 +519,7 @@ class Ui_MainWindow(object):
             colorValue =  QtGui.QColor(color, 0, 0)
         return colorValue
 
+    # FOR DESCRIPTION
     def setDescription(self, index):
         widget = self.getCameraWidget(index)
         self.idValue.setText(str(widget.camera_id))
@@ -507,8 +557,7 @@ class Ui_MainWindow(object):
             self.unsafeHumanValue.setText(str(widget.unsafeHumans))
             self.safeHumanValue.setText(str(widget.safeHumans))
 
-
-
+    #FOR Scroll Area and Main Display and Description
     def scrollAreaClick(self, index):
         numberOfWidgets = self.formLayout.count()
         self.selectedIndex = index
@@ -528,6 +577,7 @@ class Ui_MainWindow(object):
             widget.camera.setEnabled(True)
             widget.cameraBoxTag.setEnabled(True)
 
+    #For All Camera Widgets
     def updateCamera(self, index, frame=None, humans = 0, unsafeHumans = 0, safeHumans = 0, status = None ):
         widget = self.getCameraWidget(index)
         if frame is None:
@@ -545,7 +595,8 @@ class Ui_MainWindow(object):
             widget.safeHumans = safeHumans
             widget.status = status
 
-    def addCamera(self, index, ip, tag = None):
+    #For Camera Widget
+    def addCamera(self, index, ip, tag = ''):
         newCamera = ExtendedQGroupBox(index, ip)
         newCamera.clicked.connect(lambda: self.scrollAreaClick(index))
 
@@ -554,10 +605,12 @@ class Ui_MainWindow(object):
 
         #Intialising Group Box Settings
         newCamera.setTitle(f"Camera ID: {index}")
-        if tag is None:
+        if tag =='':
             newCamera.cameraBoxTag.setText(f"Camera {index}")
+            newCamera.camera_tag = f"Camera {index}"
         else:
             newCamera.cameraBoxTag.setText(tag)
+            newCamera.camera_tag = tag
 
         # Add Widget to form layout (LabelRole)
         self.formLayout.setWidget(
@@ -566,11 +619,13 @@ class Ui_MainWindow(object):
         if index == self.selectedIndex:
             self.setDescription(index)
 
+    #For Form Layout
     def getCameraWidget(self, index):
         i, j = getCameraWidgetIndices(index)
         widget = self.formLayout.itemAt(i, j).widget()
         return widget
 
+    #For Scroll Area
     def setLabeltoFrame(self, frame, widget):
         if frame is not None:
             widget.setPixmap(QtGui.QPixmap.fromImage(frame))
@@ -578,15 +633,25 @@ class Ui_MainWindow(object):
             widget.setPixmap(QtGui.QPixmap('default.jpg'))
         #widget.camera.setScaledContents(True)
 
-
+#For Conversion of OpenCV MAT to QtFrame
 def ConvertFrametoQtFrame(frame):
     frame = QtGui.QImage(
         frame.data, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888).rgbSwapped()
     return frame
 
-
+#For Indexing Form Layout
 def getCameraWidgetIndices(index):
     rowIndex = index // 2
     columnIndex = index % 2
     columnIndexAttr = QtWidgets.QFormLayout.LabelRole if columnIndex == 0 else QtWidgets.QFormLayout.FieldRole
     return (rowIndex, columnIndexAttr)
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
