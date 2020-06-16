@@ -95,15 +95,18 @@ def spawn_process(sources,start_index,queue,N):
     num_shared = shared_memory.SharedMemory(name='num_container')
     num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
 
-
     frame_data_memory = shared_memory.SharedMemory(name='frame_data_container')
     frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
+
+    status_flag_memory = shared_memory.SharedMemory(name='status_flag_container')
+    status_flag = np.ndarray((N), dtype=bool, buffer=status_flag_memory.buf)
+
 
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
-    for i in sources:
-        det = VisionSurveillance(queue,src=i)
+    for link in sources:
+        det = VisionSurveillance(queue,src=link[0])
         stream_objects.append(det)
 
     #Note: index is passed in start function as indexing is important
@@ -111,19 +114,17 @@ def spawn_process(sources,start_index,queue,N):
     #       to avoid mixing and overriding of frames during display.
     for count,obj in enumerate(stream_objects):
         obj.start(start_index+count)
+        status_flag[obj.index]=True
 
     user_exit=False
     breaker=False
     while True :
         for det in stream_objects:
-            user_exit = det.detection(images,boxes,scores,classes,num,display,frame_data)
-            if user_exit:
-                breaker=True
-        if breaker:
-            print('Breaker Execution')
-            break
+            det.detection(images,boxes,scores,classes,num,display,frame_data)
+            if not status_flag[det.index]:
+                print('Closing Camera',det.index)
+                stream_objects.remove(det)
 
-    print('Process Exit started')
     #Exit operations
     for det in stream_objects:
         det.cap.stop()

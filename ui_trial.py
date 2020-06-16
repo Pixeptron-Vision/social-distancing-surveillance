@@ -428,6 +428,9 @@ class Ui_MainWindow(object):
         self.actionNew.triggered.connect(lambda: self.newClicked(self.formLayout))
         self.actionEdit.triggered.connect(lambda: self.editClicked(self.formLayout))
         self.actionRemove.triggered.connect(lambda: self.removeClicked(self.formLayout))
+        self.removeStreamTrigger = False
+
+        self.newStreamTrigger = False
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -461,10 +464,12 @@ class Ui_MainWindow(object):
         Dialog.show()
         Dialog.exec_()
         if ui.makeCamBool:
-            self.addCamera(index = int(ui.idValue.text()), ip = ui.ipValue.text(), tag = ui.tagValue.text())
+            self.newStreamTrigger = True
+            self.newStreamDict = {'ip':ui.ipValue.text(),'tag':ui.tagValue.text()}
+            # self.addCamera(index = int(ui.idValue.text()), ip = ui.ipValue.text(), tag = ui.tagValue.text())
         else:
             print("Cancelled New Camera")
-    
+
     #For Menubar: File->Edit Camera
     def editClicked(self, layout = None):
         Dialog = QtWidgets.QDialog()
@@ -480,6 +485,11 @@ class Ui_MainWindow(object):
         else:
             print("CANCEL")
 
+    def clearWidgets(self):
+        for i in range(self.formLayout.count()):
+            widget = self.getCameraWidget(i)
+            widget.setParent(None)
+
     #For Menubar: File->Remove Camera
     def removeClicked(self, layout = None):
         Dialog = QtWidgets.QDialog()
@@ -488,8 +498,9 @@ class Ui_MainWindow(object):
         Dialog.show()
         Dialog.exec_()
         if ui.removeCamBool:
-            widget = self.getCameraWidget(int(ui.idValues.currentIndex()))
-            widget.setParent(None)
+            # print('1')
+            self.removeStreamTrigger = True
+            self.removeStreamId = int(ui.idValues.currentIndex())
         else:
             print("CANCEL")
 
@@ -558,19 +569,41 @@ class Ui_MainWindow(object):
             self.safeHumanValue.setText(str(widget.safeHumans))
 
     #FOR Scroll Area and Main Display and Description
+    # def scrollAreaClick(self, index):
+    #     numberOfWidgets = self.formLayout.count()
+    #     self.selectedIndex = index
+    #     self.setDescription(index)
+    #     for i in range(numberOfWidgets):
+    #         widget = self.getCameraWidget(i)
+    #         if i == index:
+    #             widget.setChecked(True)
+    #             widget.camera.setLineWidth(5)
+    #             widget.cameraBoxTag.setLineWidth(5)
+    #             widget.camera.setEnabled(True)
+    #             widget.cameraBoxTag.setEnabled(True)
+    #             continue
+    #         widget.setChecked(False)
+    #         widget.camera.setLineWidth(1)
+    #         widget.cameraBoxTag.setLineWidth(1)
+    #         widget.camera.setEnabled(True)
+    #         widget.cameraBoxTag.setEnabled(True)
     def scrollAreaClick(self, index):
         numberOfWidgets = self.formLayout.count()
+        temp = self.selectedIndex
         self.selectedIndex = index
         self.setDescription(index)
-        for i in range(numberOfWidgets):
-            widget = self.getCameraWidget(i)
-            if i == index:
-                widget.setChecked(True)
-                widget.camera.setLineWidth(5)
-                widget.cameraBoxTag.setLineWidth(5)
-                widget.camera.setEnabled(True)
-                widget.cameraBoxTag.setEnabled(True)
-                continue
+
+        # for i in range(numberOfWidgets):
+        widget = self.getCameraWidget(self.selectedIndex)
+        # if i == index:
+        widget.setChecked(True)
+        widget.camera.setLineWidth(5)
+        widget.cameraBoxTag.setLineWidth(5)
+        widget.camera.setEnabled(True)
+        widget.cameraBoxTag.setEnabled(True)
+
+        widget = self.getCameraWidget(temp)
+        if widget is not None:
             widget.setChecked(False)
             widget.camera.setLineWidth(1)
             widget.cameraBoxTag.setLineWidth(1)
