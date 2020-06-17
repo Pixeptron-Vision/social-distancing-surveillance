@@ -428,9 +428,12 @@ class Ui_MainWindow(object):
         self.actionNew.triggered.connect(lambda: self.newClicked(self.formLayout))
         self.actionEdit.triggered.connect(lambda: self.editClicked(self.formLayout))
         self.actionRemove.triggered.connect(lambda: self.removeClicked(self.formLayout))
-        self.removeStreamTrigger = False
+        self.actionExit.triggered.connect(lambda: self.exitClicked(MainWindow))
 
         self.newStreamTrigger = False
+        self.editStreamTrigger = False
+        self.editStreamIPTrigger = False
+        self.removeStreamTrigger = False
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -465,7 +468,7 @@ class Ui_MainWindow(object):
         Dialog.exec_()
         if ui.makeCamBool:
             self.newStreamTrigger = True
-            self.newStreamDict = {'ip':ui.ipValue.text(),'tag':ui.tagValue.text()}
+            self.newStreamDict = {'ip':ui.ipValue.text().replace(" ", ""),'tag':ui.tagValue.text()}
             # self.addCamera(index = int(ui.idValue.text()), ip = ui.ipValue.text(), tag = ui.tagValue.text())
         else:
             print("Cancelled New Camera")
@@ -478,10 +481,16 @@ class Ui_MainWindow(object):
         Dialog.show()
         Dialog.exec_()
         if ui.editCamBool:
+            self.editStreamTrigger = True
+
             widget = self.getCameraWidget(int(ui.idValues.currentIndex()))
             widget.camera_tag = str(ui.tagValue.text())
             widget.cameraBoxTag.setText(str(ui.tagValue.text()))
-            widget.camera_ip = str(ui.ipValue.text())
+
+            self.editStreamDict = {'id': int(ui.idValues.currentIndex()),'ip':ui.ipValue.text().replace(" ", ""),'tag':ui.tagValue.text()}
+            
+            if widget.camera_ip.replace(" ", "") != str(ui.ipValue.text()).replace(" ", ""):
+                self.editStreamIPTrigger = True
         else:
             print("CANCEL")
 
@@ -504,6 +513,9 @@ class Ui_MainWindow(object):
         else:
             print("CANCEL")
 
+    #For Menubar: File->Exit
+    def exitClicked(self, MainWindow):
+        MainWindow.close()
 
     # FOR DESCRIPTION
     def setWidgetTextColor(self, color):
@@ -687,4 +699,10 @@ if __name__ == "__main__":
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
-    sys.exit(app.exec_())
+    app.exec_()
+    while True:
+        if not MainWindow.isVisible():
+            print('exit')
+            break
+    sys.exit(0)
+    

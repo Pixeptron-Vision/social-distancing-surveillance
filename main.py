@@ -144,8 +144,18 @@ def update_UI(ui,MainWindow,dispaly,frame_data,current_cam_count,sources):
         if ui.newStreamTrigger:
             ui.newStreamTrigger=False
             sources.append([ui.newStreamDict['ip'],ui.newStreamDict['tag']])
+            ui.newStreamDict.clear()
             ui.clearWidgets()
             return True
+
+        if ui.editStreamTrigger:
+            ui.editStreamTrigger=False
+            sources[ui.editStreamDict['id']] = [ ui.editStreamDict['ip'], ui.editStreamDict['tag'] ]
+            ui.editStreamDict.clear()
+            if ui.editStreamIPTrigger:
+                ui.editStreamIPTrigger = False
+                ui.clearWidgets()
+                return True
 
         for i in range(current_cam_count):
             if status_flag[i]:
