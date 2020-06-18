@@ -581,46 +581,46 @@ class Ui_MainWindow(object):
             self.safeHumanValue.setText(str(widget.safeHumans))
 
     #FOR Scroll Area and Main Display and Description
-    # def scrollAreaClick(self, index):
-    #     numberOfWidgets = self.formLayout.count()
-    #     self.selectedIndex = index
-    #     self.setDescription(index)
-    #     for i in range(numberOfWidgets):
-    #         widget = self.getCameraWidget(i)
-    #         if i == index:
-    #             widget.setChecked(True)
-    #             widget.camera.setLineWidth(5)
-    #             widget.cameraBoxTag.setLineWidth(5)
-    #             widget.camera.setEnabled(True)
-    #             widget.cameraBoxTag.setEnabled(True)
-    #             continue
-    #         widget.setChecked(False)
-    #         widget.camera.setLineWidth(1)
-    #         widget.cameraBoxTag.setLineWidth(1)
-    #         widget.camera.setEnabled(True)
-    #         widget.cameraBoxTag.setEnabled(True)
     def scrollAreaClick(self, index):
         numberOfWidgets = self.formLayout.count()
-        temp = self.selectedIndex
         self.selectedIndex = index
         self.setDescription(index)
-
-        # for i in range(numberOfWidgets):
-        widget = self.getCameraWidget(self.selectedIndex)
-        # if i == index:
-        widget.setChecked(True)
-        widget.camera.setLineWidth(5)
-        widget.cameraBoxTag.setLineWidth(5)
-        widget.camera.setEnabled(True)
-        widget.cameraBoxTag.setEnabled(True)
-
-        widget = self.getCameraWidget(temp)
-        if widget is not None:
+        for i in range(numberOfWidgets):
+            widget = self.getCameraWidget(i)
+            if i == index:
+                widget.setChecked(True)
+                widget.camera.setLineWidth(5)
+                widget.cameraBoxTag.setLineWidth(5)
+                widget.camera.setEnabled(True)
+                widget.cameraBoxTag.setEnabled(True)
+                continue
             widget.setChecked(False)
             widget.camera.setLineWidth(1)
             widget.cameraBoxTag.setLineWidth(1)
             widget.camera.setEnabled(True)
             widget.cameraBoxTag.setEnabled(True)
+    #def scrollAreaClick(self, index):
+    #    numberOfWidgets = self.formLayout.count()
+    #    temp = self.selectedIndex
+    #    self.selectedIndex = index
+    #    self.setDescription(index)
+
+    #    # for i in range(numberOfWidgets):
+    #    widget = self.getCameraWidget(self.selectedIndex)
+    #    # if i == index:
+    #    widget.setChecked(True)
+    #    widget.camera.setLineWidth(5)
+    #    widget.cameraBoxTag.setLineWidth(5)
+    #    widget.camera.setEnabled(True)
+    #    widget.cameraBoxTag.setEnabled(True)
+
+    #    widget = self.getCameraWidget(temp)
+    #    if widget is not None:
+    #        widget.setChecked(False)
+    #        widget.camera.setLineWidth(1)
+    #        widget.cameraBoxTag.setLineWidth(1)
+    #        widget.camera.setEnabled(True)
+    #        widget.cameraBoxTag.setEnabled(True)
 
     #For All Camera Widgets
     def updateCamera(self, index, frame=None, humans = 0, unsafeHumans = 0, safeHumans = 0, status = None ):

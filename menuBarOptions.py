@@ -191,6 +191,8 @@ class EditDialog(object):
         self.editButtonBox.accepted.connect(Dialog.accept)
         self.editButtonBox.rejected.connect(Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.selectIdCam(self.idValues.currentIndex(), layout)
+
 
         self.editCamBool = False
         self.editButtonBox.accepted.connect(lambda: self.editCameraYes())
@@ -301,6 +303,7 @@ class RemoveDialog(object):
         self.removeButtonBox.accepted.connect(Dialog.accept)
         self.removeButtonBox.rejected.connect(Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.selectIdCam(self.idValues.currentIndex(), layout)
 
         self.removeCamBool = False
         self.removeButtonBox.accepted.connect(lambda: self.removeCameraYes())

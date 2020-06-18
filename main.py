@@ -174,8 +174,9 @@ def update_UI(ui,MainWindow,dispaly,frame_data,current_cam_count,sources):
                     ui.getCameraWidget(i).setChecked(True)
                     ui.getCameraWidget(i).camera.setLineWidth(5)
                     ui.getCameraWidget(i).cameraBoxTag.setLineWidth(5)
-                    ui.getCameraWidget(i).camera.setEnabled(True)
-                    ui.getCameraWidget(i).cameraBoxTag.setEnabled(True)
+                ui.getCameraWidget(i).camera.setEnabled(True)
+                ui.getCameraWidget(i).cameraBoxTag.setEnabled(True)
+                
 
         cv2.waitKey(1)
         if not MainWindow.isVisible():
@@ -237,13 +238,13 @@ if __name__ == '__main__':
     M = 4
     # N will show the max no. of cameras the program is able to handle i.e. upper threshold of no. of cams
     N = 50
-    sources = [['../../PNNLParkingLot2.avi','t1'],
-                ['../../PNNL_Parking_LOT(1).avi','t2'],
-                ['../../PNNLParkingLot2.avi','t3'],
-                ['../../vid_short.mp4',''],
-                ['../../PNNL_Parking_LOT(1).avi',''],
-                ['../../PNNLParkingLot2.avi',''],
-                ['../../vid_short.mp4','']]
+    sources = [['../Dataset/PNNLParkingLot2.avi','t1'],
+                ['../Dataset/PNNL_Parking_LOT(1).avi','t2'],
+                ['../Dataset/PNNLParkingLot2.avi','t3'],
+                ['../Dataset/Pedestrian.mp4',''],
+                ['../Dataset/PNNL_Parking_LOT(1).avi',''],
+                ['../Dataset/PNNLParkingLot2.avi',''],
+                ['../Dataset/walking.avi','']]
 
     # N = total number of streams to process
     current_cam_count = len(sources)
