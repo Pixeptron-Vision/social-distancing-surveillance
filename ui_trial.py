@@ -404,17 +404,27 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        
         self.actionNew = QtWidgets.QAction(MainWindow)
+        self.actionNew.setShortcut("Ctrl+N")
+        self.actionNew.setStatusTip('Add a new camera feed')
         self.actionNew.setObjectName("actionNew")
+        
         self.actionEdit = QtWidgets.QAction(MainWindow)
+        self.actionEdit.setShortcut("Ctrl+E")
+        self.actionEdit.setStatusTip('Edit an existing camera feed')
         self.actionEdit.setObjectName("actionEdit")
+
         self.actionRemove = QtWidgets.QAction(MainWindow)
+        self.actionRemove.setShortcut("Ctrl+R")
+        self.actionRemove.setStatusTip('Remove an existing camera feed')
         self.actionRemove.setObjectName("actionRemove")
-        self.actionRestart = QtWidgets.QAction(MainWindow)
-        self.actionRestart.setObjectName("actionRestart")
+
         self.actionExit = QtWidgets.QAction(MainWindow)
+        self.actionExit.setShortcut("Ctrl+Q")
+        self.actionExit.setStatusTip('Close the application')
         self.actionExit.setObjectName("actionExit")
-        self.menuFile.addAction(self.actionRestart)
+
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionEdit)
         self.menuFile.addAction(self.actionRemove)
@@ -453,11 +463,11 @@ class Ui_MainWindow(object):
         self.safeHumanLabel.setText(_translate("MainWindow", "NO. OF SAFE HUMANS:"))
         self.unsafeHumanLabel.setText(_translate("MainWindow", "NO. OF UNSAFE HUMANS:"))
         self.menuFile.setTitle(_translate("MainWindow", "File"))
-        self.actionRestart.setText(_translate("MainWindow", "Restart"))
+        
         self.actionNew.setText(_translate("MainWindow", "New Camera"))
         self.actionEdit.setText(_translate("MainWindow", "Edit Camera"))
         self.actionRemove.setText(_translate("MainWindow", "Remove Camera"))
-        self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionExit.setText(_translate("MainWindow", "Quit"))
 
     #For Menubar: File->New Camera
     def newClicked(self, layout = None):

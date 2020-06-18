@@ -104,7 +104,7 @@ class NewDialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "New Camera"))
         self.addDescription.setText(_translate("Dialog", "Enter the following information of the new camera you want to add:"))
         self.ipLabel.setText(_translate("Dialog", "CAMERA IP: "))
         self.idLabel.setText(_translate("Dialog", "CAMERA ID: "))
@@ -191,9 +191,8 @@ class EditDialog(object):
         self.editButtonBox.accepted.connect(Dialog.accept)
         self.editButtonBox.rejected.connect(Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+
         self.selectIdCam(self.idValues.currentIndex(), layout)
-
-
         self.editCamBool = False
         self.editButtonBox.accepted.connect(lambda: self.editCameraYes())
         self.editButtonBox.rejected.connect(lambda: self.editCameraNo())
@@ -213,7 +212,7 @@ class EditDialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Edit Camera"))
         self.editDescription.setText(_translate("Dialog", "Please select a camera to edit and enter the new values:"))
         self.ipLabel.setText(_translate("Dialog", "CAMERA IP: "))
         self.tagLabel.setText(_translate("Dialog", "CAMERA TAG: "))
@@ -303,8 +302,8 @@ class RemoveDialog(object):
         self.removeButtonBox.accepted.connect(Dialog.accept)
         self.removeButtonBox.rejected.connect(Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
-        self.selectIdCam(self.idValues.currentIndex(), layout)
 
+        self.selectIdCam(self.idValues.currentIndex(), layout)
         self.removeCamBool = False
         self.removeButtonBox.accepted.connect(lambda: self.removeCameraYes())
         self.removeButtonBox.rejected.connect(lambda: self.removeCameraNo())
@@ -324,7 +323,7 @@ class RemoveDialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Remove Camera"))
         self.removeDescription.setText(_translate("Dialog", "Please select a camera to remove:"))
         self.ipLabel.setText(_translate("Dialog", "CAMERA IP: "))
         self.tagLabel.setText(_translate("Dialog", "CAMERA TAG: "))

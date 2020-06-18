@@ -19,6 +19,8 @@ from multiprocessing import shared_memory , Queue
 from ui_trial import *
 import ctypes
 
+from utils.CSVConverter import writeToCSV, readFromCSV 
+
 # The below model_path contains the link to frozen graph of pretrained tensorflow object detection model.
 model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
 # Probability of detected box to be human
@@ -238,13 +240,17 @@ if __name__ == '__main__':
     M = 4
     # N will show the max no. of cameras the program is able to handle i.e. upper threshold of no. of cams
     N = 50
+
+    CameraIPData = 'CameraIPData'
+    '''
     sources = [['../Dataset/PNNLParkingLot2.avi','t1'],
                 ['../Dataset/PNNL_Parking_LOT(1).avi','t2'],
                 ['../Dataset/PNNLParkingLot2.avi','t3'],
-                ['../Dataset/Pedestrian.mp4',''],
+                ['../Dataset/walking.avi',''],
                 ['../Dataset/PNNL_Parking_LOT(1).avi',''],
-                ['../Dataset/PNNLParkingLot2.avi',''],
-                ['../Dataset/walking.avi','']]
+                ['../Dataset/PNNLParkingLot2.avi','']]
+    '''
+    sources = readFromCSV(filename = CameraIPData)
 
     # N = total number of streams to process
     current_cam_count = len(sources)
@@ -313,6 +319,9 @@ if __name__ == '__main__':
         if not rest:
             break
 
+    print('Saving sources to CSV')
+    writeToCSV(CameraIPData, sources)
+    
     print('Clear Garbage')
     terminate_processes(jobs,detector_process)
     # close the detector process i.e. HumanDetection class
