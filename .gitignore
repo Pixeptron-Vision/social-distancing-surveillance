@@ -5,3 +5,5 @@ testBackgroundDetection.py
 visionObjects/__pycache__/
 .vscode
 data
+utils/__pycache__/
+ui/__pycache__/

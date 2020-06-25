@@ -16,7 +16,7 @@ from utils.process_stream import VisionSurveillance , spawn_process
 import multiprocessing
 
 from multiprocessing import shared_memory , Queue
-from ui_trial import *
+from ui.ui_main import *
 import ctypes
 
 from utils.CSVConverter import writeToCSV, readFromCSV 
@@ -182,8 +182,8 @@ def update_UI(ui,MainWindow,dispaly,frame_data,current_cam_count,sources):
 
         cv2.waitKey(1)
         if not MainWindow.isVisible():
-             print('exit')
-             return False
+            print('exit')
+            return False
 
 
 # def initialize_shared_memory(N):
@@ -236,6 +236,7 @@ def update_UI(ui,MainWindow,dispaly,frame_data,current_cam_count,sources):
 
 
 if __name__ == '__main__':
+    
     # M show the max number of cam we are willing to run in one process
     M = 4
     # N will show the max no. of cameras the program is able to handle i.e. upper threshold of no. of cams
@@ -272,25 +273,39 @@ if __name__ == '__main__':
 
     # The image conatiner conatins the images of all N cameras in a numpy aaray format.
     # The shape of image is fixed beforehand declared as global variable on start of this script as 'shape'
-    img_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='image_container')
+    img_shared = None
+    if img_shared is None:
+        img_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='image_container')
     images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=img_shared.buf)
 
-    display_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='display_container')
+    display_shared = None
+    if display_shared is None:
+        display_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='display_container')
     display = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=display_shared.buf)
 
-    boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
+    boxes_shared = None
+    if boxes_shared is None:
+        boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
     boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
 
-    scores_shared = shared_memory.SharedMemory(create=True,size=scores.nbytes,name='scores_container')
+    scores_shared = None
+    if scores_shared is None:
+        scores_shared = shared_memory.SharedMemory(create=True,size=scores.nbytes,name='scores_container')
     scores = np.ndarray((N,100),dtype=np.float32, buffer=scores_shared.buf)
 
-    classes_shared = shared_memory.SharedMemory(create=True,size=classes.nbytes,name='classes_container')
+    classes_shared = None
+    if classes_shared is None:
+        classes_shared = shared_memory.SharedMemory(create=True,size=classes.nbytes,name='classes_container')
     classes = np.ndarray((N,100),dtype=np.float32, buffer=classes_shared.buf)
 
-    num_shared = shared_memory.SharedMemory(create=True,size=num.nbytes,name='num_container')
+    num_shared = None
+    if num_shared is None:
+        num_shared = shared_memory.SharedMemory(create=True,size=num.nbytes,name='num_container')
     num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
 
-    status_flag_memory = shared_memory.SharedMemory(create=True,size=status_flag.nbytes,name='status_flag_container')
+    status_flag_memory = None
+    if status_flag_memory is None:
+        status_flag_memory = shared_memory.SharedMemory(create=True,size=status_flag.nbytes,name='status_flag_container')
     status_flag = np.ndarray((N),dtype=bool, buffer=status_flag_memory.buf)
 
     # Frame data will store all the data and parameters like no. of humans , no. of safe and unsafe humans
@@ -330,8 +345,11 @@ if __name__ == '__main__':
     detector_process.p.join()
     # Erase all the reserved memory
     img_shared.unlink()
+    display_shared.unlink()
     boxes_shared.unlink()
     scores_shared.unlink()
     classes_shared.unlink()
     num_shared.unlink()
+    status_flag_memory.unlink()
+    frame_data_memory.unlink()
     sys.exit(0)

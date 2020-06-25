@@ -8,7 +8,7 @@
 
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
-from menuBarOptions import *
+from ui.menuBarOptions import *
 
 class ExtendedQGroupBox(QtWidgets.QGroupBox):
     defaultFrame = "stream_error.jpg"
@@ -447,8 +447,8 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.applicationTitle.setText(_translate("MainWindow", "APPLICATION NAME"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "SOCIAL DISTANCING SURVEILLANCE"))
+        self.applicationTitle.setText(_translate("MainWindow", "SOCIAL DISTANCING SURVEILLANCE"))
         self.humanValue.setText(_translate("MainWindow", "0"))
         self.statusValue.setText(_translate("MainWindow", "SAFE"))
         self.safeHumanValue.setText(_translate("MainWindow", "0"))
@@ -494,12 +494,16 @@ class Ui_MainWindow(object):
             self.editStreamTrigger = True
 
             widget = self.getCameraWidget(int(ui.idValues.currentIndex()))
-            widget.camera_tag = str(ui.tagValue.text())
-            widget.cameraBoxTag.setText(str(ui.tagValue.text()))
+            if ui.tagValue.text().strip() =='':
+                widget.cameraBoxTag.setText(f"Camera {int(ui.idValues.currentIndex())}")
+                widget.camera_tag = f"Camera {int(ui.idValues.currentIndex())}"
+            else:
+                widget.camera_tag = str(ui.tagValue.text().strip())
+                widget.cameraBoxTag.setText(str(ui.tagValue.text().strip()))
 
-            self.editStreamDict = {'id': int(ui.idValues.currentIndex()),'ip':ui.ipValue.text().replace(" ", ""),'tag':ui.tagValue.text()}
+            self.editStreamDict = {'id': int(ui.idValues.currentIndex()),'ip':ui.ipValue.text().strip(),'tag':ui.tagValue.text().strip()}
             
-            if widget.camera_ip.replace(" ", "") != str(ui.ipValue.text()).replace(" ", ""):
+            if widget.camera_ip.strip() != str(ui.ipValue.text()).strip():
                 self.editStreamIPTrigger = True
         else:
             print("CANCEL")
