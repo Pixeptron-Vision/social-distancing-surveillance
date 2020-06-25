@@ -236,7 +236,9 @@ def update_UI(ui,MainWindow,dispaly,frame_data,current_cam_count,sources):
 
 
 if __name__ == '__main__':
-    
+    #Code to support multiprocessing module for application packaging using pyinstaller
+    multiprocessing.freeze_support()
+
     # M show the max number of cam we are willing to run in one process
     M = 4
     # N will show the max no. of cameras the program is able to handle i.e. upper threshold of no. of cams
