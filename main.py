@@ -94,7 +94,7 @@ class HumanDetector():
                     boxes[index], scores[index], classes[index], num[index] = odapi.processFrame(img)
         # print('Detection closed')
         # After exit of while loop disconnect all shared memory.
-        existing_container.close()
+        image_container.close()
         boxes_shared.close()
         scores_shared.close()
         classes_shared.close()
@@ -275,45 +275,95 @@ if __name__ == '__main__':
 
     # The image conatiner conatins the images of all N cameras in a numpy aaray format.
     # The shape of image is fixed beforehand declared as global variable on start of this script as 'shape'
-    img_shared = None
-    if img_shared is None:
+    # img_shared = None
+    # if img_shared is None:
+    #     img_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='image_container')
+    # images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=img_shared.buf)
+
+    # display_shared = None
+    # if display_shared is None:
+    #     display_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='display_container')
+    # display = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=display_shared.buf)
+
+    # boxes_shared = None
+    # if boxes_shared is None:
+    #     boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
+    # boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
+
+    # scores_shared = None
+    # if scores_shared is None:
+    #     scores_shared = shared_memory.SharedMemory(create=True,size=scores.nbytes,name='scores_container')
+    # scores = np.ndarray((N,100),dtype=np.float32, buffer=scores_shared.buf)
+
+    # classes_shared = None
+    # if classes_shared is None:
+    #     classes_shared = shared_memory.SharedMemory(create=True,size=classes.nbytes,name='classes_container')
+    # classes = np.ndarray((N,100),dtype=np.float32, buffer=classes_shared.buf)
+
+    # num_shared = None
+    # if num_shared is None:
+    #     num_shared = shared_memory.SharedMemory(create=True,size=num.nbytes,name='num_container')
+    # num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
+
+    # status_flag_memory = None
+    # if status_flag_memory is None:
+    #     status_flag_memory = shared_memory.SharedMemory(create=True,size=status_flag.nbytes,name='status_flag_container')
+    # status_flag = np.ndarray((N),dtype=bool, buffer=status_flag_memory.buf)
+
+    # # Frame data will store all the data and parameters like no. of humans , no. of safe and unsafe humans
+    # # of processed frame in the shared memory which can be accessed by the UI
+    # frame_data_memory = shared_memory.SharedMemory(create=True,size=frame_data.nbytes,name='frame_data_container')
+    # frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
+    # queue = Queue()
+    try:
         img_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='image_container')
+    except FileExistsError:
+        img_shared = shared_memory.SharedMemory(name='image_container')
     images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=img_shared.buf)
 
-    display_shared = None
-    if display_shared is None:
+    try:
         display_shared = shared_memory.SharedMemory(create=True,size=images.nbytes,name='display_container')
+    except FileExistsError:
+        display_shared = shared_memory.SharedMemory(name='display_container')
     display = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=display_shared.buf)
 
-    boxes_shared = None
-    if boxes_shared is None:
+    try:
         boxes_shared = shared_memory.SharedMemory(create=True,size=boxes.nbytes,name='boxes_container')
+    except FileExistsError:
+        boxes_shared = shared_memory.SharedMemory(name='boxes_container')
     boxes = np.ndarray((N,100,4),dtype=np.float32, buffer=boxes_shared.buf)
 
-    scores_shared = None
-    if scores_shared is None:
+    try:
         scores_shared = shared_memory.SharedMemory(create=True,size=scores.nbytes,name='scores_container')
+    except FileExistsError:
+        scores_shared = shared_memory.SharedMemory(name='scores_container')
     scores = np.ndarray((N,100),dtype=np.float32, buffer=scores_shared.buf)
 
-    classes_shared = None
-    if classes_shared is None:
+    try:
         classes_shared = shared_memory.SharedMemory(create=True,size=classes.nbytes,name='classes_container')
+    except FileExistsError:
+        classes_shared = shared_memory.SharedMemory(name='classes_container')
     classes = np.ndarray((N,100),dtype=np.float32, buffer=classes_shared.buf)
-
-    num_shared = None
-    if num_shared is None:
+    try:
         num_shared = shared_memory.SharedMemory(create=True,size=num.nbytes,name='num_container')
+    except FileExistsError:
+        num_shared = shared_memory.SharedMemory(name='num_container')
     num = np.ndarray((N),dtype=np.int, buffer=num_shared.buf)
 
-    status_flag_memory = None
-    if status_flag_memory is None:
+    try:
         status_flag_memory = shared_memory.SharedMemory(create=True,size=status_flag.nbytes,name='status_flag_container')
+    except FileExistsError:
+        status_flag_memory = shared_memory.SharedMemory(name='status_flag_container')
     status_flag = np.ndarray((N),dtype=bool, buffer=status_flag_memory.buf)
 
     # Frame data will store all the data and parameters like no. of humans , no. of safe and unsafe humans
     # of processed frame in the shared memory which can be accessed by the UI
-    frame_data_memory = shared_memory.SharedMemory(create=True,size=frame_data.nbytes,name='frame_data_container')
+    try:
+        frame_data_memory = shared_memory.SharedMemory(create=True,size=frame_data.nbytes,name='frame_data_container')
+    except FileExistsError:
+        frame_data_memory = shared_memory.SharedMemory(name='frame_data_container')
     frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
+
     queue = Queue()
 
 

@@ -1,5 +1,6 @@
 
 import numpy as np
+import os
 import argparse
 import cv2
 import sys
@@ -19,9 +20,17 @@ from multiprocessing import shared_memory , Queue
 detection_confidence = 0.4
 # N=4
 shape = (800,800)
+name = os.getcwd()
+save_dir = os.path.join(name,'captures')
 class VisionSurveillance:
-    def __init__(self,queue,src=0):
-        self.src = src;
+    def __init__(self,queue,tag="default_unnamed_cam",src=0):
+        self.src = src
+        self.tag = tag
+        self.directory = os.path.join(save_dir ,tag)
+        try:
+            os.mkdir(self.directory)  
+        except OSError as error:  
+            pass 
         self.threshold_dist = 75
         self.queue=queue
 
@@ -29,9 +38,17 @@ class VisionSurveillance:
         # self.display_obj = FrameDisplay().start()
         # self.display_obj.index=index_count
         self.index=index_count
+        self.last_save = -10
         self.cap = VideoCaptureAsync(src=self.src).start()
         # self.backUpdate_obj = background()
         return self
+
+    def save_frame(self,frame,violations):
+        timestr = time.strftime("%Y-%m-%d-%H_%M_%S") 
+        filename = os.path.join(self.directory ,timestr+"__viols-"+str(int(violations))+".jpg")
+        # print(filename)
+        cv2.imwrite(filename,frame)
+        self.last_save = time.time()
 
     # This function is for detection for each frame
     def detection(self,images,boxes,scores,classes,num,display,frame_data):
@@ -68,6 +85,9 @@ class VisionSurveillance:
 
             frame_data[index_count][2] = frame_data[index_count][0]-frame_data[index_count][1]
             frame_data[index_count][3] = bool(frame_data[index_count][1])
+            if pairs is not None and int(time.time()-self.last_save)>600:
+                self.save_frame(current_frame,frame_data[index_count][1])
+
 
 
 
@@ -106,7 +126,7 @@ def spawn_process(sources,start_index,queue,N):
     # and each object det is for each different cameras
     stream_objects = []
     for link in sources:
-        det = VisionSurveillance(queue,src=link[0])
+        det = VisionSurveillance(queue,src=link[0],tag=link[1])
         stream_objects.append(det)
 
     #Note: index is passed in start function as indexing is important
