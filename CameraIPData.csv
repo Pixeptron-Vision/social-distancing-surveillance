@@ -1,7 +1,4 @@
 Camera IP,Camera Tag
-../Dataset/PNNLParkingLot2.avi,t1
-../Dataset/PNNL_Parking_LOT(1).avi,t2
-../Dataset/PNNLParkingLot2.avi,t3
-../Dataset/walking.avi,
-../Dataset/PNNL_Parking_LOT(1).avi,
-../Dataset/Pedestrian.mp4,Pedestrian
+../../PNNLParkingLot2.avi,t3
+../../walking.avi,t2
+../../PNNL_Parking_LOT(1).avi,t1

@@ -20,10 +20,10 @@ from multiprocessing import shared_memory , Queue
 detection_confidence = 0.4
 # N=4
 shape = (800,800)
-name = os.getcwd()
-save_dir = os.path.join(name,'captures')
+# name = os.getcwd()
+# save_dir = os.path.join(name,'captures')
 class VisionSurveillance:
-    def __init__(self,queue,tag="default_unnamed_cam",src=0):
+    def __init__(self,queue,save_dir,tag="default_unnamed_cam",src=0):
         self.src = src
         self.tag = tag
         self.directory = os.path.join(save_dir ,tag)
@@ -61,7 +61,8 @@ class VisionSurveillance:
 
         else:
             current_frame = cv2.resize(current_frame, (800,800))
-            images[index_count] = current_frame.copy()
+            nw_frame = cv2.cvtColor(current_frame,cv2.COLOR_BGR2RGB)
+            images[index_count] = nw_frame.copy()
             self.queue.put(index_count)
             # print(images[index_count])
             # print(num[index_count])
@@ -96,7 +97,7 @@ class VisionSurveillance:
         self.display_obj.stop()
 
 
-def spawn_process(sources,start_index,queue,N):
+def spawn_process(sources,start_index,queue,N,save_dir):
     existing_container = shared_memory.SharedMemory(name='image_container')
     images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=existing_container.buf)
 
@@ -126,7 +127,7 @@ def spawn_process(sources,start_index,queue,N):
     # and each object det is for each different cameras
     stream_objects = []
     for link in sources:
-        det = VisionSurveillance(queue,src=link[0],tag=link[1])
+        det = VisionSurveillance(queue,save_dir,src=link[0],tag=link[1])
         stream_objects.append(det)
 
     #Note: index is passed in start function as indexing is important
