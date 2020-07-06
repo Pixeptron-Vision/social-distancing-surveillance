@@ -8,7 +8,8 @@
 
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
-from ui.menuBarOptions import *
+#from ui.menuBarOptions import *
+from menuBarOptions import *
 
 class ExtendedQGroupBox(QtWidgets.QGroupBox):
     defaultFrame = "stream_error.jpg"
@@ -415,6 +416,12 @@ class Ui_MainWindow(object):
         self.actionEdit.setStatusTip('Edit an existing camera feed')
         self.actionEdit.setObjectName("actionEdit")
 
+        self.actionCaptureLocation = QtWidgets.QAction(MainWindow)
+        self.actionCaptureLocation.setShortcut("Ctrl+S")
+        self.actionCaptureLocation.setStatusTip('Set location for saving captures')
+        self.actionCaptureLocation.setObjectName("actionCaptureLocation")
+        self.captureLocation = ''
+
         self.actionRemove = QtWidgets.QAction(MainWindow)
         self.actionRemove.setShortcut("Ctrl+R")
         self.actionRemove.setStatusTip('Remove an existing camera feed')
@@ -427,6 +434,7 @@ class Ui_MainWindow(object):
 
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionEdit)
+        self.menuFile.addAction(self.actionCaptureLocation)
         self.menuFile.addAction(self.actionRemove)
         self.menuFile.addAction(self.actionExit)
         self.menubar.addAction(self.menuFile.menuAction())
@@ -437,6 +445,7 @@ class Ui_MainWindow(object):
     #Menu Bar Triggers
         self.actionNew.triggered.connect(lambda: self.newClicked(self.formLayout))
         self.actionEdit.triggered.connect(lambda: self.editClicked(self.formLayout))
+        self.actionCaptureLocation.triggered.connect(lambda: self.captureLocationClicked())
         self.actionRemove.triggered.connect(lambda: self.removeClicked(self.formLayout))
         self.actionExit.triggered.connect(lambda: self.exitClicked(MainWindow))
 
@@ -466,6 +475,7 @@ class Ui_MainWindow(object):
         
         self.actionNew.setText(_translate("MainWindow", "New Camera"))
         self.actionEdit.setText(_translate("MainWindow", "Edit Camera"))
+        self.actionCaptureLocation.setText(_translate("MainWindow", "Set Save Location for Captures"))
         self.actionRemove.setText(_translate("MainWindow", "Remove Camera"))
         self.actionExit.setText(_translate("MainWindow", "Quit"))
 
@@ -507,6 +517,16 @@ class Ui_MainWindow(object):
                 self.editStreamIPTrigger = True
         else:
             print("CANCEL")
+
+    def captureLocationClicked(self):
+        dirDialog = QtWidgets.QFileDialog() 
+        dirDialog.setFileMode(QtWidgets.QFileDialog.Directory)
+        dirDialog.setOption(QtWidgets.QFileDialog.ShowDirsOnly, True)
+        dirDialog.setDirectory(self.captureLocation)
+        filename = dirDialog.getExistingDirectory()
+        if filename.strip() != '':
+            self.captureLocation = filename
+        print(self.captureLocation)
 
     def clearWidgets(self):
         for i in range(self.formLayout.count()):
