@@ -5,6 +5,7 @@ import cv2
 import sys
 from scipy.spatial import distance
 import datetime as dt
+from pathlib import Path
 import time
 import os
 from threading import Thread
@@ -198,8 +199,18 @@ if __name__ == '__main__':
     N = 50
 
     # Sets directory for saving the vilation images
-    name = os.getcwd()
-    save_dir = os.path.join(name,'captures')
+    save_directory_file = open("save_directory_path.txt","r")
+    name = save_directory_file.readline()
+    save_directory_file.close()
+
+    if name=='':
+        name = os.getcwd()
+        save_dir = os.path.join(name,'captures')
+    save_dir = str(Path(name))
+
+    if not os.path.isdir(save_dir):
+        name = os.getcwd()
+        save_dir = os.path.join(name,'captures')      
 
     CameraIPData = 'CameraIPData'
     '''
@@ -317,7 +328,11 @@ if __name__ == '__main__':
 
     # print('Saving sources to CSV')
     writeToCSV(CameraIPData, sources)
-
+    # save savinf folder name to txt file
+    save_directory_file = open("save_directory_path.txt","w")
+    save_directory_file.truncate(0)
+    save_directory_file.write(directory_path[0].decode())
+    save_directory_file.close()
     # print('Clear Garbage')
     terminate_processes(jobs,detector_process)
     # close the detector process i.e. HumanDetection class

@@ -17,11 +17,13 @@ from utils.DL_model import DetectorAPI,centre_calcualtion
 import multiprocessing
 
 from multiprocessing import shared_memory , Queue
+
+time_threshold = 600
+
 detection_confidence = 0.4
 # N=4
 shape = (800,800)
-# name = os.getcwd()
-# save_dir = os.path.join(name,'captures')
+
 class VisionSurveillance:
     def __init__(self,queue,tag="default_unnamed_cam",src=0):
         self.src = src
@@ -91,7 +93,8 @@ class VisionSurveillance:
 
             frame_data[index_count][2] = frame_data[index_count][0]-frame_data[index_count][1]
             frame_data[index_count][3] = bool(frame_data[index_count][1])
-            if pairs is not None and int(time.time()-self.last_save)>600:
+            
+            if pairs is not None and int(time.time()-self.last_save)>time_threshold:
                 self.save_frame(current_frame,frame_data[index_count][1],save_dir)
 
 

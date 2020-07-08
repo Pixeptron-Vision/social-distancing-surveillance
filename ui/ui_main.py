@@ -9,6 +9,9 @@
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
 from ui.menuBarOptions import *
+from multiprocessing import shared_memory
+from pathlib import Path
+import numpy as np
 # from menuBarOptions import *
 
 class ExtendedQGroupBox(QtWidgets.QGroupBox):
@@ -526,7 +529,10 @@ class Ui_MainWindow(object):
         filename = dirDialog.getExistingDirectory()
         if filename.strip() != '':
             self.captureLocation = filename
-        print(self.captureLocation)
+
+        path_memory = shared_memory.SharedMemory(name='directory_path_category')
+        directory_path = np.chararray(1,itemsize=500, buffer=path_memory.buf)
+        directory_path[0]= str(Path(self.captureLocation))
 
     def clearWidgets(self):
         for i in range(self.formLayout.count()):
