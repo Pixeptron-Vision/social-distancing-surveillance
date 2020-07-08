@@ -8,8 +8,8 @@
 
 import cv2
 from PyQt5 import QtCore, QtGui, QtWidgets
-#from ui.menuBarOptions import *
-from menuBarOptions import *
+from ui.menuBarOptions import *
+# from menuBarOptions import *
 
 class ExtendedQGroupBox(QtWidgets.QGroupBox):
     defaultFrame = "stream_error.jpg"

@@ -20,7 +20,7 @@ from multiprocessing import shared_memory , Queue
 from ui.ui_main import *
 import ctypes
 
-from utils.CSVConverter import writeToCSV, readFromCSV 
+from utils.CSVConverter import writeToCSV, readFromCSV
 
 # The below model_path contains the link to frozen graph of pretrained tensorflow object detection model.
 model_path = 'ssd_mobilenet_v1_coco_2018_01_28/frozen_inference_graph.pb'
@@ -102,17 +102,17 @@ class HumanDetector():
         num_shared.close()
         sys.exit(0)
 
-def start_streams_process(sources,M,queue,N,save_dir):
+def start_streams_process(sources,M,queue,N):
     i=0
     jobs = []
     while i<len(sources):
         # print(i)
         if (i+M)<=len(sources):
             process = multiprocessing.Process(target=spawn_process,
-                            args=(sources[i:i+M],i,queue,N,save_dir))
+                            args=(sources[i:i+M],i,queue,N))
         else:
             process = multiprocessing.Process(target=spawn_process,
-                            args=(sources[i:],i,queue,N,save_dir))
+                            args=(sources[i:],i,queue,N))
 
         process.start()
         jobs.append(process)
@@ -179,7 +179,7 @@ def update_UI(ui,MainWindow,dispaly,frame_data,current_cam_count,sources):
                     ui.getCameraWidget(i).cameraBoxTag.setLineWidth(5)
                 ui.getCameraWidget(i).camera.setEnabled(True)
                 ui.getCameraWidget(i).cameraBoxTag.setEnabled(True)
-                
+
 
         cv2.waitKey(1)
         if not MainWindow.isVisible():
@@ -200,10 +200,6 @@ if __name__ == '__main__':
     # Sets directory for saving the vilation images
     name = os.getcwd()
     save_dir = os.path.join(name,'captures')
-    try:
-        os.mkdir(save_dir)  
-    except OSError as error:  
-        pass 
 
     CameraIPData = 'CameraIPData'
     '''
@@ -231,6 +227,7 @@ if __name__ == '__main__':
     num = np.zeros((N),dtype=np.int)
     frame_data = np.zeros((N,4),dtype=np.int)
     status_flag = np.zeros((N),dtype=bool)
+    directory_path = np.chararray(1,itemsize=500)
 
     # The image conatiner conatins the images of all N cameras in a numpy aaray format.
     # The shape of image is fixed beforehand declared as global variable on start of this script as 'shape'
@@ -283,6 +280,19 @@ if __name__ == '__main__':
         frame_data_memory = shared_memory.SharedMemory(name='frame_data_container')
     frame_data = np.ndarray((N,4), dtype=np.float32, buffer=frame_data_memory.buf)
 
+    try:
+        path_memory = shared_memory.SharedMemory(create=True,size=directory_path.nbytes,name='directory_path_category')
+    except FileExistsError:
+        path_memory = shared_memory.SharedMemory(name='directory_path_category')
+    directory_path = np.chararray(1,itemsize=500, buffer=path_memory.buf)
+
+    directory_path[0] = save_dir
+    try:
+        os.mkdir(directory_path[0].decode())
+    except OSError as error:
+        pass
+
+
     queue = Queue()
 
 
@@ -296,7 +306,7 @@ if __name__ == '__main__':
 # ////////////////////////////////////////////////////////////////////////////////////
 
     while True:
-        jobs = start_streams_process(sources,M,queue,N,save_dir)
+        jobs = start_streams_process(sources,M,queue,N)
 
         rest = update_UI(ui,MainWindow,display,frame_data,current_cam_count,sources)
 
@@ -307,7 +317,7 @@ if __name__ == '__main__':
 
     # print('Saving sources to CSV')
     writeToCSV(CameraIPData, sources)
-    
+
     # print('Clear Garbage')
     terminate_processes(jobs,detector_process)
     # close the detector process i.e. HumanDetection class

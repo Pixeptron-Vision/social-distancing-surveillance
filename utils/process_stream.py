@@ -23,14 +23,14 @@ shape = (800,800)
 # name = os.getcwd()
 # save_dir = os.path.join(name,'captures')
 class VisionSurveillance:
-    def __init__(self,queue,save_dir,tag="default_unnamed_cam",src=0):
+    def __init__(self,queue,tag="default_unnamed_cam",src=0):
         self.src = src
         self.tag = tag
-        self.directory = os.path.join(save_dir ,tag)
-        try:
-            os.mkdir(self.directory)  
-        except OSError as error:  
-            pass 
+        # self.save_directory = os.path.join(save_dir ,tag)
+        # try:
+        #     os.mkdir(self.directory)  
+        # except OSError as error:  
+        #     pass 
         self.threshold_dist = 75
         self.queue=queue
 
@@ -43,7 +43,12 @@ class VisionSurveillance:
         # self.backUpdate_obj = background()
         return self
 
-    def save_frame(self,frame,violations):
+    def save_frame(self,frame,violations,save_dir):
+        self.directory = os.path.join(save_dir ,self.tag)
+        try:
+            os.mkdir(self.directory)  
+        except OSError as error:  
+            pass
         timestr = time.strftime("%Y-%m-%d-%H_%M_%S") 
         filename = os.path.join(self.directory ,timestr+"__viols-"+str(int(violations))+".jpg")
         # print(filename)
@@ -51,7 +56,7 @@ class VisionSurveillance:
         self.last_save = time.time()
 
     # This function is for detection for each frame
-    def detection(self,images,boxes,scores,classes,num,display,frame_data):
+    def detection(self,images,boxes,scores,classes,num,display,frame_data,save_dir):
         index_count=self.index
         ret, current_frame = self.cap.read()
         if not ret or current_frame is None:
@@ -87,7 +92,7 @@ class VisionSurveillance:
             frame_data[index_count][2] = frame_data[index_count][0]-frame_data[index_count][1]
             frame_data[index_count][3] = bool(frame_data[index_count][1])
             if pairs is not None and int(time.time()-self.last_save)>600:
-                self.save_frame(current_frame,frame_data[index_count][1])
+                self.save_frame(current_frame,frame_data[index_count][1],save_dir)
 
 
 
@@ -97,7 +102,7 @@ class VisionSurveillance:
         self.display_obj.stop()
 
 
-def spawn_process(sources,start_index,queue,N,save_dir):
+def spawn_process(sources,start_index,queue,N):
     existing_container = shared_memory.SharedMemory(name='image_container')
     images = np.ndarray((N,shape[0],shape[1],3), dtype=np.float32, buffer=existing_container.buf)
 
@@ -122,12 +127,15 @@ def spawn_process(sources,start_index,queue,N,save_dir):
     status_flag_memory = shared_memory.SharedMemory(name='status_flag_container')
     status_flag = np.ndarray((N), dtype=bool, buffer=status_flag_memory.buf)
 
+    path_memory = shared_memory.SharedMemory(name='directory_path_category')
+    save_directory_path = np.chararray(1,itemsize=500, buffer=path_memory.buf)
+
 
     # The below objects are the instance of VisionSurveillance visionObjects
     # and each object det is for each different cameras
     stream_objects = []
     for link in sources:
-        det = VisionSurveillance(queue,save_dir,src=link[0],tag=link[1])
+        det = VisionSurveillance(queue,src=link[0],tag=link[1])
         stream_objects.append(det)
 
     #Note: index is passed in start function as indexing is important
@@ -141,7 +149,7 @@ def spawn_process(sources,start_index,queue,N,save_dir):
     breaker=False
     while True :
         for det in stream_objects:
-            det.detection(images,boxes,scores,classes,num,display,frame_data)
+            det.detection(images,boxes,scores,classes,num,display,frame_data,save_directory_path[0].decode())
             if not status_flag[det.index]:
                 print('Closing Camera',det.index)
                 stream_objects.remove(det)
