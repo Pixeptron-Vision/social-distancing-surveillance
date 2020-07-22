@@ -596,7 +596,7 @@ class Ui_MainWindow(object):
             self.safeHumanValue.setText('')
             self.activityValue.setText('')
         else:
-            if widget.status is None:
+            if widget.status==0:
                 self.statusValue.setText('SAFE')
                 palette = self.setWidgetTextColor(self.green)
                 self.statusValue.setPalette(palette)
@@ -604,13 +604,13 @@ class Ui_MainWindow(object):
                 palette = self.setWidgetTextColor(self.blue)
                 self.activityValue.setPalette(palette)
             else:
-                if widget.status == False:
+                if widget.status == 2:
                     self.statusValue.setText('SAFE')
                     palette = self.setWidgetTextColor(self.green)
                     self.statusValue.setPalette(palette)
                     self.activityValue.setText('Safe Conditions for past 1 hour')
                     self.activityValue.setPalette(palette)
-                elif widget.status == True:
+                elif widget.status == 1:
                     self.statusValue.setText('UNSAFE')
                     palette = self.setWidgetTextColor(self.red)
                     self.statusValue.setPalette(palette)

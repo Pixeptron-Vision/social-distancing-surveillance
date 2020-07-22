@@ -200,27 +200,24 @@ if __name__ == '__main__':
 
     # Sets directory for saving the vilation images
     save_directory_file = open("save_directory_path.txt","r")
-    name = save_directory_file.readline()
+    name = save_directory_file.readline().strip()
     save_directory_file.close()
+    save_dir=name
 
-    if name=='':
+    if name=='' or os.path.isdir(save_dir)==False:
         name = os.getcwd()
         save_dir = os.path.join(name,'captures')
-    save_dir = str(Path(name))
+        try:
+            os.mkdir(save_dir)  
+        except OSError as error:  
+            pass
+    else:
+        save_dir = str(Path(name))
+    
 
-    if not os.path.isdir(save_dir):
-        name = os.getcwd()
-        save_dir = os.path.join(name,'captures')      
 
     CameraIPData = 'CameraIPData'
-    '''
-    sources = [['../Dataset/PNNLParkingLot2.avi','t1'],
-                ['../Dataset/PNNL_Parking_LOT(1).avi','t2'],
-                ['../Dataset/PNNLParkingLot2.avi','t3'],
-                ['../Dataset/walking.avi',''],
-                ['../Dataset/PNNL_Parking_LOT(1).avi',''],
-                ['../Dataset/PNNLParkingLot2.avi','']]
-    '''
+
     sources = readFromCSV(filename = CameraIPData)
 
     # N = total number of streams to process

@@ -41,6 +41,7 @@ class VisionSurveillance:
         # self.display_obj.index=index_count
         self.index=index_count
         self.last_save = -10
+        self.last_unsafe_activity=-30
         self.cap = VideoCaptureAsync(src=self.src).start()
         # self.backUpdate_obj = background()
         return self
@@ -93,6 +94,16 @@ class VisionSurveillance:
 
             frame_data[index_count][2] = frame_data[index_count][0]-frame_data[index_count][1]
             frame_data[index_count][3] = bool(frame_data[index_count][1])
+
+            # 1 = I am unsafe
+            # 2 safe for more than threshold
+            # 0 safe but less than threshold
+            if(frame_data[index_count][3]):
+                self.last_unsafe_activity = time.time()
+            elif time.time()-self.last_unsafe_activity > 30:
+                frame_data[index_count][3]=2
+            else:
+                frame_data[index_count]=0
             
             if pairs is not None and int(time.time()-self.last_save)>time_threshold:
                 self.save_frame(current_frame,frame_data[index_count][1],save_dir)
