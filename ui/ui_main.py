@@ -673,8 +673,9 @@ class Ui_MainWindow(object):
             widget.safeHumans = 0
             widget.status = None
         else:
-            widget.currentQtFrame = ConvertFrametoQtFrame(frame)
-            self.setLabeltoFrame(widget.currentQtFrame, widget.camera)
+            if self.selectedIndex == index:
+                widget.currentQtFrame = ConvertFrametoQtFrame(frame)
+                self.setLabeltoFrame(widget.currentQtFrame, widget.camera)
             widget.humans = humans
             widget.unsafeHumans = unsafeHumans
             widget.safeHumans = safeHumans

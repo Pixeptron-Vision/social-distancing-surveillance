@@ -1,5 +1,5 @@
 Camera IP,Camera Tag
-../../PNNLParkingLot2.avi,WorStation 2
-../../walking.avi,Sideways 2
-../../PNNL_Parking_LOT(1).avi,Parking 2
-../../PNNLParkingLot2.avi,WorkStation
+../Dataset/PNNLParkingLot2.avi,WorStation 2
+../Dataset/walking.avi,Sideways 2
+../Dataset/PNNL_Parking_LOT(1).avi,Parking 2
+../Dataset/PNNLParkingLot2.avi,WorkStation
